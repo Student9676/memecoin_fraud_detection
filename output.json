@@ -1,0 +1,115 @@
+{
+    "token": {
+      "name": "SUPERJUDGE",
+      "symbol": "SUPERJUDGE",
+      "mint": "8yj7dQ1smUViXLYefLBpQCiHPuuj2RPEcbUhtxbiip7b",
+      "uri": "https://ipfs-forward.solanatracker.io/ipfs/QmZbtj97YCr4sWDJzY8MZ9GzZfuNobStFbKQSJEZBuZrtg",
+      "decimals": 6,
+      "description": "",
+      "image": "https://image.solanatracker.io/proxy?url=https%3A%2F%2Fipfs-forward.solanatracker.io%2Fipfs%2FQmeHX3tZrBGbkn3Tq6WXCbdx51gEXzF6nTQX3JjAT7k71M",
+      "showName": true,
+      "createdOn": "https://pump.fun",
+      "twitter": "https://x.com/elonmusk/status/1906395475026313370#ref=51975482-d505-44f6-84b2-9d24faef50a2",
+      "hasFileMetaData": true,
+      "strictSocials": {
+        "twitter": "https://x.com/elonmusk/status/1906395475026313370#ref=51975482-d505-44f6-84b2-9d24faef50a2"
+      }
+    },
+    "pools": [
+      {
+        "poolId": "8yj7dQ1smUViXLYefLBpQCiHPuuj2RPEcbUhtxbiip7b",
+        "liquidity": {
+          "quote": 206.783946978,
+          "usd": 25702.231992764184
+        },
+        "price": {
+          "quote": 3.320875924372976e-7,
+          "usd": 0.00004127686151406151
+        },
+        "tokenSupply": 1000000000,
+        "lpBurn": 100,
+        "tokenAddress": "8yj7dQ1smUViXLYefLBpQCiHPuuj2RPEcbUhtxbiip7b",
+        "marketCap": {
+          "quote": 332.0875924372976,
+          "usd": 41276.86151406151
+        },
+        "decimals": 6,
+        "security": {
+          "freezeAuthority": null,
+          "mintAuthority": null
+        },
+        "quoteToken": "So11111111111111111111111111111111111111112",
+        "market": "pumpfun",
+        "curvePercentage": 96.03587626015332,
+        "curve": "BLXYwiNrMDUQV6FjnawB2UzT3JvQ1faQ59QkAci1aehe",
+        "lastUpdated": 1743443895654,
+        "deployer": null,
+        "txns": {
+          "buys": 4470,
+          "total": 4544,
+          "volume": 6117,
+          "sells": 73
+        }
+      }
+    ],
+    "events": {
+      "1m": {
+        "priceChangePercentage": 1.2375251358381723
+      },
+      "5m": {
+        "priceChangePercentage": 1.1487948150187495
+      },
+      "15m": {
+        "priceChangePercentage": 0.7869399696220991
+      },
+      "30m": {
+        "priceChangePercentage": 0.2661915783591042
+      },
+      "1h": {
+        "priceChangePercentage": 1.0353675925255177
+      },
+      "2h": {
+        "priceChangePercentage": 0.6544676532937889
+      },
+      "3h": {
+        "priceChangePercentage": 3.7868051823442097
+      },
+      "4h": {
+        "priceChangePercentage": 7.0466146315018126
+      },
+      "5h": {
+        "priceChangePercentage": 8.394733891782193
+      },
+      "6h": {
+        "priceChangePercentage": 10.290456462225439
+      },
+      "12h": {
+        "priceChangePercentage": 18.82614758352191
+      },
+      "24h": {
+        "priceChangePercentage": 30.732729431867174
+      }
+    },
+    "risk": {
+      "rugged": false,
+      "risks": [
+        {
+          "name": "Pump.fun contracts can be changed at any time",
+          "description": "Pump.fun contracts can be changed by Pump.fun at any time",
+          "level": "warning",
+          "score": 10
+        },
+        {
+          "name": "Bonding curve not complete",
+          "description": "No raydium liquidity pool, bonding curve not complete",
+          "level": "warning",
+          "score": 4000
+        }
+      ],
+      "score": 3
+    },
+    "buys": 492,
+    "sells": 15,
+    "txns": 507,
+    "holders": 365
+  }
