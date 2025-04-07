@@ -29,20 +29,9 @@ COOKIES_PATH = "cookies.json"
 DEV_NODES_PATH = "dev_nodes"
 WALLET_NODES_PATH = "wallet_nodes"
 TRANSACTION_DATA_PATH = "transaction_data"
+DEV_COIN_EDGES_PATH = "dev_coin_edges"
 BASE_SOLTRACKER_API_URL = "https://data.solanatracker.io"
 BASE_SOLSCAN_URL = "https://solscan.io"
-
-def concat_address(address: str) -> str:
-    """
-    Concatenates the wallet address by keeping the first and last four characters around an ellipsis.
-
-    Args:
-        address (str): The wallet address to be concatenated.
-
-    Returns:
-        str: The concatenated wallet address.
-    """
-    return f"{address[:4]}...{address[-4:]}"
 
 def extract_number(text: str) -> int:
     """
@@ -99,6 +88,47 @@ def read_transaction_data():
     print(f"Read {len(transactions)} transactions.")
     return transactions
 
+def get_dev_coin_edge():
+    """
+    This function returns the developer-coin edge data for a given token address.
+    It retrieves the developer's address, the token name, the token address, the 
+    creation time, and the starting balance from transaction_data and dev_nodes. 
+    NOTE: Make sure to run this function after saving the dev_nodes and transaction_data.
+    
+    Returns:
+        dict: A dictionary containing the developer's address, token name, token address,
+              creation time, and starting balance.
+    """
+    # get the last transaction JSON file for the token_name
+    transaction_folder = os.path.join(TRANSACTION_DATA_PATH, token_name)
+    transaction_files = sorted(
+        os.listdir(transaction_folder),
+        key = lambda x: extract_number(x) # sort by the number in the filename
+    )
+    dev_transaction_filename = transaction_files[-1]  # alphabetically the last file, i.e. the first tx is the dev funding the coin
+    dev_transaction_path = os.path.join(transaction_folder, dev_transaction_filename)
+    with open(dev_transaction_path, "r") as f:
+        last_transaction_data = json.load(f)
+
+    # get the dev wallet_address from data in dev_nodes
+    dev_node_file = os.path.join(DEV_NODES_PATH, f"{token_name}.json")
+    with open(dev_node_file, "r") as f:
+        dev_data = json.load(f)
+    
+    assert last_transaction_data["wallet"] == dev_data["dev_address"], "The first transaction's wallet address is not the dev's address."
+    assert last_transaction_data["type"] == "buy", "The first transaction is not a buy transaction."
+
+    creation_time = last_transaction_data["time"] # unix timestamp
+    starting_balance = last_transaction_data["volume"] # starting balance in USD
+    edge_data = {
+        "dev_address": dev_data["dev_address"],
+        "token_name": token_name,
+        "token_address": token_address,
+        "creation_time":  creation_time,
+        "starting_balance": starting_balance,
+    }
+    return edge_data
+
 def save_wallet_data():
     """
     This function collects and saves wallet data from the Solscan website for each 
@@ -147,8 +177,7 @@ def save_wallet_data():
                 "num_defi_activities": num_defi_activities,
                 "rugpull_association": 0,
             }
-            filename = concat_address(wallet_address)
-            with open(os.path.join(WALLET_NODES_PATH, f"{filename}.json"), "w") as f:
+            with open(os.path.join(WALLET_NODES_PATH, f"{wallet_address}.json"), "w") as f:
                 json.dump(wallet_data, f, indent=4)
         print("Saved all wallet data.")
 
@@ -188,7 +217,7 @@ def save_transaction_data():
         for tx_data in tqdm(trades, desc="Getting batches of transactions..."):
             folder = os.path.join(TRANSACTION_DATA_PATH, token_name)
             os.makedirs(folder, exist_ok=True)
-            with open(os.path.join(folder, f"{token_name}_{idx}.json"), "w") as f:
+            with open(os.path.join(folder, f"{token_name}-{idx}.json"), "w") as f:
                 json.dump(tx_data, f, indent=4)
             idx += 1
         time.sleep(1.1)  # API rate limit
@@ -247,12 +276,18 @@ if __name__ == "__main__":
         # get dev data and save it as a JSON in DEV_NODES_PATH
         dev_data = get_dev_data()
         os.makedirs(DEV_NODES_PATH, exist_ok=True)
-        filename = concat_address(dev_data["dev_address"])
-        with open(os.path.join(DEV_NODES_PATH, f"{filename}.json"), "w") as f:
+        with open(os.path.join(DEV_NODES_PATH, f"{token_name}.json"), "w") as f:
             json.dump(dev_data, f, indent=4)
         
         save_transaction_data()
 
         save_wallet_data()
 
-        print("Finished!")
+        # get dev<->coin edge data and save it as a JSON in DEV_COIN_EDGES_PATH
+        dev_coin_edge_data = get_dev_coin_edge()
+        os.makedirs(DEV_COIN_EDGES_PATH, exist_ok=True)
+        filename = f"{token_name}-{dev_coin_edge_data['dev_address']}.json"
+        with open(os.path.join(DEV_COIN_EDGES_PATH, filename), "w") as f:
+            json.dump(dev_coin_edge_data, f, indent=4)
+
+        print("Finished data collection!")
