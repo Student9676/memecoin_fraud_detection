@@ -10,6 +10,7 @@ def get_recent_token_tx(token_address, limit=50):
     url = f"https://public-api.solscan.io/token/holders?tokenAddress={token_address}&limit={limit}"
     headers = {"accept": "application/json"}
     response = requests.get(url, headers=headers)
+    print(response)
     holders = response.json().get("data", [])
 
     txs = []
@@ -26,6 +27,7 @@ def get_recent_token_tx(token_address, limit=50):
 def get_price_at_time(token_address, timestamp):
     url = f"https://api.dexscreener.com/latest/dex/pairs/solana/{token_address}"
     response = requests.get(url)
+    print(response)
     data = response.json()
 
     try:
@@ -108,3 +110,4 @@ def build_graph(token_address):
 # Run the build
 if __name__ == "__main__":
     build_graph(token_address)
+    get_price_at_time(token_address, datetime.now().timestamp())

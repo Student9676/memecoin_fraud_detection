@@ -23,8 +23,8 @@ HEADERS = {"x-api-key": SOLTRACKER_API_KEY}
 token_name = "r/pwease"
 token_name = re.sub(r"[^\w\-]", "_", token_name) # replace special characters with underscores
 token_address = "H8AyUYyjzVLxkkDHDShd671YrtziroNc8HjfXDnypump"
-get_cookies = False
-headless = True
+get_cookies = True
+headless = False
 COOKIES_PATH = "cookies.json"
 DEV_NODES_PATH = "dev_nodes"
 WALLET_NODES_PATH = "wallet_nodes"
@@ -99,6 +99,7 @@ def get_dev_coin_edge():
         dict: A dictionary containing the developer's address, token name, token address,
               creation time, and starting balance.
     """
+    print("Getting dev-coin edge data...")
     # get the last transaction JSON file for the token_name
     transaction_folder = os.path.join(TRANSACTION_DATA_PATH, token_name)
     transaction_files = sorted(
@@ -127,6 +128,7 @@ def get_dev_coin_edge():
         "creation_time":  creation_time,
         "starting_balance": starting_balance,
     }
+    print("Returned dev-coin edge data.")
     return edge_data
 
 def save_wallet_data():
@@ -135,14 +137,35 @@ def save_wallet_data():
     wallet address associated with the transactions in the transaction data. It saves
     a JSON file for each wallet address in the WALLET_NODES_PATH directory containing 
     the wallet address, number of transfers, number of defi activities, and a rugpull 
-    association boolean.
+    association boolean. This function also creates a logs/log.txt to allow resuming
+    after interruptions.
     """
-    print("Getting wallet data...")
-    # get all unique wallet addresses from the transaction data
-    transactions = read_transaction_data()
-    wallet_addresses = set()
-    for transaction in transactions:
-        wallet_addresses.add(transaction["wallet"])
+    # if log file DNE or is empty, we start from scratch
+    if not os.path.exists("logs/log.txt") or os.stat("logs/log.txt").st_size == 0:
+        print("Getting wallet data...")
+        # get all unique wallet addresses from the transaction data
+        transactions = read_transaction_data()
+        wallet_addresses = set()
+        for transaction in transactions:
+            wallet_addresses.add(transaction["wallet"])
+        wallet_addresses = sorted(list(wallet_addresses))
+        # save all wallet addresses in the log file
+        os.makedirs("logs", exist_ok=True)
+        with open("logs/log.txt", "w") as f:
+            for wallet_address in wallet_addresses:
+                f.write(f"{wallet_address}\n")
+    # continue where we left off: from the first address in log.txt
+    else:
+        print("Continuing getting wallet data...")
+        # read wallet addresses from log
+        wallet_addresses = []
+        with open("logs/log.txt", "r") as f:
+            for line in f:
+                wallet_addresses.append(line.strip())
+        # get cookies again because interruption is likely due to human cookies expiring
+        if not get_cookies:
+            cookie_loader.get_cookies(COOKIES_PATH, headless=headless)
+
     os.makedirs(WALLET_NODES_PATH, exist_ok=True)
     
     with sync_playwright() as p:
@@ -150,7 +173,7 @@ def save_wallet_data():
         context = browser.new_context()
 
         if get_cookies:
-            cookie_loader.get_cookies(COOKIES_PATH)
+            cookie_loader.get_cookies(COOKIES_PATH, headless=headless)
         # load cookies from the saved file and set them in the context
         cookies = load_cookies(COOKIES_PATH)
         context.add_cookies(cookies)
@@ -177,9 +200,20 @@ def save_wallet_data():
                 "num_defi_activities": num_defi_activities,
                 "rugpull_association": 0,
             }
+
+            # write the wallet data in its file
             with open(os.path.join(WALLET_NODES_PATH, f"{wallet_address}.json"), "w") as f:
                 json.dump(wallet_data, f, indent=4)
-        print("Saved all wallet data.")
+
+            # remove the top most wallet address from the log since we have saved its data
+            with open("logs/log.txt", "r") as f:
+                lines = f.readlines()
+                lines = lines[1:] # remove the first address
+            with open("logs/log.txt", "w") as f:
+                for line in lines:
+                    f.write(line) # write all the addresses except for the first one
+        browser.close()
+    print("Saved all wallet data.")
 
 def save_transaction_data():
     """
@@ -237,7 +271,7 @@ def get_dev_data():
         context = browser.new_context()
 
         if get_cookies:
-            cookie_loader.get_cookies(COOKIES_PATH)
+            cookie_loader.get_cookies(COOKIES_PATH, headless=headless)
         # load cookies from the saved file and set them in the context
         cookies = load_cookies(COOKIES_PATH)
         context.add_cookies(cookies)
@@ -281,7 +315,20 @@ if __name__ == "__main__":
         
         save_transaction_data()
 
-        save_wallet_data()
+        # try to save wallet data. if an error occurs, retry up to 15 times
+        retries = 15
+        for attempt in range(retries):
+            try:
+                save_wallet_data()
+                break
+            except Exception as e:
+                print(f"Attempt {attempt + 1} failed: {e}")
+                if attempt < retries - 1:
+                    time.sleep(2)
+                else:
+                    print("Max retries reached. Exiting.")
+                    raise
+
 
         # get dev<->coin edge data and save it as a JSON in DEV_COIN_EDGES_PATH
         dev_coin_edge_data = get_dev_coin_edge()
