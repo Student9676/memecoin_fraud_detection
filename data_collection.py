@@ -462,4 +462,34 @@ if __name__ == "__main__":
         with open(os.path.join(DEV_COIN_EDGES_PATH, filename), "w") as f:
             json.dump(dev_coin_edge_data, f, indent=4)
 
+        coin_data = get_coin_data()
+        os.makedirs(DEV_NODES_PATH, exist_ok=True)
+        with open(os.path.join(DEV_NODES_PATH, f"{token_name}_coin.json"), "w") as f:
+            json.dump(coin_data, f, indent=4)
+
+        # get dev<->coin edge data and save it as a JSON in DEV_COIN_EDGES_PATH
+        dev_coin_edge_data = get_dev_coin_edge()
+        os.makedirs(DEV_COIN_EDGES_PATH, exist_ok=True)
+        filename = f"{token_name}-{dev_coin_edge_data['dev_address']}.json"
+        with open(os.path.join(DEV_COIN_EDGES_PATH, filename), "w") as f:
+            json.dump(dev_coin_edge_data, f, indent=4)
+
+       
+        wallet_coin_edges = get_wallet_coin_edges()
+        os.makedirs("wallet_coin_edges", exist_ok=True)
+        with open(f"wallet_coin_edges/{token_name}.json", "w") as f:
+            json.dump(wallet_coin_edges, f, indent=4)
+
+        dev_address = dev_coin_edge_data["dev_address"]
+        wallet_dev_edges = get_wallet_dev_edges(dev_address)
+        os.makedirs("wallet_dev_edges", exist_ok=True)
+        with open(f"wallet_dev_edges/{token_name}-{dev_address}.json", "w") as f:
+            json.dump(wallet_dev_edges, f, indent=4)
+
+    
+        wallet_wallet_edges = get_wallet_wallet_edges()
+        os.makedirs("wallet_wallet_edges", exist_ok=True)
+        with open(f"wallet_wallet_edges/{token_name}.json", "w") as f:
+            json.dump(wallet_wallet_edges, f, indent=4)
+
         print("Finished data collection!")
