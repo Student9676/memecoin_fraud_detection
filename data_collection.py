@@ -305,6 +305,131 @@ def get_dev_data():
         print("Dev data returned.")
         return dev_data
 
+def get_coin_data():
+    """
+    Retrieves coin attributes (coin id, market cap, rugpull flag, dev id) from Solana Tracker API or Solscan web scraping.
+    Returns dictionary containing coin id, market cap, rugpull, and dev id
+    """
+    print("Getting coin data...")
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=headless)
+        context = browser.new_context()
+
+        if get_cookies:
+            cookie_loader.get_cookies(COOKIES_PATH)
+        # Load cookies from saved file
+        cookies = load_cookies(COOKIES_PATH)
+        context.add_cookies(cookies)
+
+        page = context.new_page()
+        
+        # Go to token page on Solscan
+        token_url = f"{BASE_SOLSCAN_URL}/token/{token_address}"
+        page.goto(token_url)
+        page.wait_for_load_state("networkidle")
+
+        # Coin ID (use token address as ID)
+        coin_id = token_address
+
+        # Market Cap
+        market_cap_selector = "div.grid.grid-cols-2.md\\:grid-cols-4 > div:nth-child(3) div.text-white"
+        market_cap_text = page.locator(market_cap_selector).inner_text()
+        market_cap_clean = market_cap_text.replace("$", "").replace(",", "").strip()
+        market_cap = float(market_cap_clean)
+
+        # Rugpull flag — infer based on heuristics or default to 0
+        rugpull_flag = 0  # You could later add logic to label based on tx patterns, drops, or API indicators
+
+        # Developer ID from previously defined logic
+        page.locator("button[aria-controls='radix-:r1t:']").click()
+        page.wait_for_selector("div[data-state='open']")
+        dev_id = page.locator("div[data-state='open'] a.text-current").get_attribute("href").split("/")[-1]
+
+        browser.close()
+
+        coin_data = {
+            "coin_id": coin_id,
+            "market_cap": market_cap,
+            "rugpull": rugpull_flag,
+            "dev_id": dev_id,
+        }
+
+        print("Coin data retrieved.")
+        return coin_data
+
+def get_wallet_wallet_edges():
+    """
+    Derives wallet-wallet edges from transactions that include both sender and receiver wallets.
+
+    Returns:
+        list: A list of wallet-wallet edge dictionaries.
+    """
+    print("Getting wallet-wallet edges...")
+    edges = []
+    transactions = read_transaction_data()
+    for tx in transactions:
+        from_wallet = tx.get("from", None)
+        to_wallet = tx.get("wallet", None)
+        if from_wallet and to_wallet and from_wallet != to_wallet:
+            edge = {
+                "from_wallet": from_wallet,
+                "to_wallet": to_wallet,
+                "amount": tx["volume"],
+                "timestamp": tx["time"],
+            }
+            edges.append(edge)
+    print(f"Collected {len(edges)} wallet-wallet edges.")
+    return edges
+
+def get_wallet_dev_edges(dev_address):
+    """
+    Constructs wallet-dev edge data using transactions that interact with the dev.
+
+    Args:
+        dev_address (str): The developer's wallet address.
+
+    Returns:
+        list: A list of wallet-dev edge dictionaries.
+    """
+    print("Getting wallet-dev edges...")
+    edges = []
+    transactions = read_transaction_data()
+    for tx in transactions:
+        if tx["wallet"] != dev_address:
+            edge = {
+                "wallet_id": tx["wallet"],
+                "dev_id": dev_address,
+                "amount": tx["volume"],
+                "timestamp": tx["time"],
+            }
+            edges.append(edge)
+    print(f"Collected {len(edges)} wallet-dev edges.")
+    return edges
+
+def get_wallet_coin_edges():
+    """
+    Extracts wallet-coin edge data from transaction_data files.
+
+    Returns:
+        list: A list of wallet-coin edge dictionaries.
+    """
+    print("Getting wallet-coin edges...")
+    edges = []
+    transactions = read_transaction_data()
+    for tx in transactions:
+        edge = {
+            "wallet_id": tx["wallet"],
+            "coin_id": tx["tokenAddress"],
+            "tx_type": tx["type"],
+            "amount": tx["volume"],  # Could be SOL or token depending on tx type
+            "timestamp": tx["time"],
+            "mc_at_tx": tx.get("marketCap", None),  # Some txs may not have this
+        }
+        edges.append(edge)
+    print(f"Collected {len(edges)} wallet-coin edges.")
+    return edges
+
 if __name__ == "__main__":
 
         # get dev data and save it as a JSON in DEV_NODES_PATH
