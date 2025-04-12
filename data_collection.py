@@ -27,6 +27,7 @@ get_cookies = True
 headless = False
 COOKIES_PATH = "cookies.json"
 DEV_NODES_PATH = "dev_nodes"
+TOKEN_NODES_PATH = "token_nodes"
 WALLET_NODES_PATH = "wallet_nodes"
 TRANSACTION_DATA_PATH = "transaction_data"
 DEV_COIN_EDGES_PATH = "dev_coin_edges"
@@ -305,58 +306,67 @@ def get_dev_data():
         print("Dev data returned.")
         return dev_data
 
-def get_coin_data():
+def get_token_data():
     """
-    Retrieves coin attributes (coin id, market cap, rugpull flag, dev id) from Solana Tracker API or Solscan web scraping.
-    Returns dictionary containing coin id, market cap, rugpull, and dev id
+    Retrieves token attributes (id, lowest and highest price, rugpull flag, and dev id) from 
+    Solana Tracker API.
+
+    Returns:
+        dict: A dictionary containing token_id, min/max_price, rugpull_flag, and dev_id
     """
     print("Getting coin data...")
 
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=headless)
-        context = browser.new_context()
+    # Get min/max price from Solana Tracker API + transactions_data
+    transaction_folder = os.path.join(TRANSACTION_DATA_PATH, token_name)
+    transaction_files = sorted(
+        os.listdir(transaction_folder),
+        key = lambda x: extract_number(x) # sort by the number in the filename
+    )
+    first_tx_file = transaction_files[-1] # dev funding the token
+    last_tx_file = transaction_files[0]
+    
+    first_tx_file_path = os.path.join(transaction_folder, first_tx_file)
+    last_tx_file_path = os.path.join(transaction_folder, last_tx_file)
 
-        if get_cookies:
-            cookie_loader.get_cookies(COOKIES_PATH)
-        # Load cookies from saved file
-        cookies = load_cookies(COOKIES_PATH)
-        context.add_cookies(cookies)
+    with open(first_tx_file_path, "r") as f:
+        first_tx_data = json.load(f)
+    with open(last_tx_file_path, "r") as f:
+        last_tx_data = json.load(f)
 
-        page = context.new_page()
-        
-        # Go to token page on Solscan
-        token_url = f"{BASE_SOLSCAN_URL}/token/{token_address}"
-        page.goto(token_url)
-        page.wait_for_load_state("networkidle")
+    first_tx_time = first_tx_data["time"]
+    last_tx_time = last_tx_data["time"]
+    assert last_tx_time > first_tx_time, "The timestamp of the last transaction must be after the first."
 
-        # Coin ID (use token address as ID)
-        coin_id = token_address
+    params = {
+        "token": token_address,
+        "time_from": first_tx_time,
+        "time_to": last_tx_time
+    }
+    
+    response = requests.get(f"{BASE_SOLTRACKER_API_URL}/price/history/range", params=params, headers=HEADERS)
+    if response.status_code != 200:
+        raise Exception(f"Error fetching trades: {response.status_code}: {response.text}")
+    
+    data = response.json()
+    min_price = data["price"]["lowest"]["price"]
+    max_price = data["price"]["highest"]["price"]
 
-        # Market Cap
-        market_cap_selector = "div.grid.grid-cols-2.md\\:grid-cols-4 > div:nth-child(3) div.text-white"
-        market_cap_text = page.locator(market_cap_selector).inner_text()
-        market_cap_clean = market_cap_text.replace("$", "").replace(",", "").strip()
-        market_cap = float(market_cap_clean)
+    # Get dev address from dev_nodes
+    dev_node_path = os.path.join(DEV_NODES_PATH, f"{token_name}.json")
+    with open(dev_node_path, "r") as f:
+        dev_data = json.load(f)
+    dev_address = dev_data["dev_address"]
 
-        # Rugpull flag — infer based on heuristics or default to 0
-        rugpull_flag = 0  # You could later add logic to label based on tx patterns, drops, or API indicators
+    token_data = {
+        "token_address": token_address,
+        "dev_address": dev_address,
+        "min_price": min_price,
+        "max_price": max_price,
+        "rugpull": 0,
+    }
 
-        # Developer ID from previously defined logic
-        page.locator("button[aria-controls='radix-:r1t:']").click()
-        page.wait_for_selector("div[data-state='open']")
-        dev_id = page.locator("div[data-state='open'] a.text-current").get_attribute("href").split("/")[-1]
-
-        browser.close()
-
-        coin_data = {
-            "coin_id": coin_id,
-            "market_cap": market_cap,
-            "rugpull": rugpull_flag,
-            "dev_id": dev_id,
-        }
-
-        print("Coin data retrieved.")
-        return coin_data
+    print("Token data retrieved.")
+    return token_data
 
 def get_wallet_wallet_edges():
     """
@@ -462,18 +472,10 @@ if __name__ == "__main__":
         with open(os.path.join(DEV_COIN_EDGES_PATH, filename), "w") as f:
             json.dump(dev_coin_edge_data, f, indent=4)
 
-        coin_data = get_coin_data()
-        os.makedirs(DEV_NODES_PATH, exist_ok=True)
-        with open(os.path.join(DEV_NODES_PATH, f"{token_name}_coin.json"), "w") as f:
-            json.dump(coin_data, f, indent=4)
-
-        # get dev<->coin edge data and save it as a JSON in DEV_COIN_EDGES_PATH
-        dev_coin_edge_data = get_dev_coin_edge()
-        os.makedirs(DEV_COIN_EDGES_PATH, exist_ok=True)
-        filename = f"{token_name}-{dev_coin_edge_data['dev_address']}.json"
-        with open(os.path.join(DEV_COIN_EDGES_PATH, filename), "w") as f:
-            json.dump(dev_coin_edge_data, f, indent=4)
-
+        token_data = get_token_data()
+        os.makedirs(TOKEN_NODES_PATH, exist_ok=True)
+        with open(os.path.join(TOKEN_NODES_PATH, f"{token_name}.json"), "w") as f:
+            json.dump(token_data, f, indent=4)
        
         wallet_coin_edges = get_wallet_coin_edges()
         os.makedirs("wallet_coin_edges", exist_ok=True)
@@ -485,7 +487,6 @@ if __name__ == "__main__":
         os.makedirs("wallet_dev_edges", exist_ok=True)
         with open(f"wallet_dev_edges/{token_name}-{dev_address}.json", "w") as f:
             json.dump(wallet_dev_edges, f, indent=4)
-
     
         wallet_wallet_edges = get_wallet_wallet_edges()
         os.makedirs("wallet_wallet_edges", exist_ok=True)
