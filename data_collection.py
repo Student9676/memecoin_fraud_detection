@@ -30,6 +30,7 @@ DEV_NODES_PATH = "dev_nodes"
 TOKEN_NODES_PATH = "token_nodes"
 WALLET_NODES_PATH = "wallet_nodes"
 TRANSACTION_DATA_PATH = "transaction_data"
+WALLET_TOKEN_EDGES_PATH = "wallet_token_edges"
 DEV_COIN_EDGES_PATH = "dev_coin_edges"
 BASE_SOLTRACKER_API_URL = "https://data.solanatracker.io"
 BASE_SOLSCAN_URL = "https://solscan.io"
@@ -62,7 +63,7 @@ def load_cookies(cookie_file):
     with open(cookie_file, "r") as f:
         return json.load(f)
 
-def read_transaction_data():
+def read_transaction_data(token_name=None, sort=False):
     """
     Reads transaction data from a nested directory structure and returns it as a list of dictionaries.
     The expected directory structure is:
@@ -78,16 +79,32 @@ def read_transaction_data():
               from a JSON file.
     """
     print("Reading transaction data...")
-    transactions = []
-    for folder_name in os.listdir(TRANSACTION_DATA_PATH): # for each coin
+    if not token_name:
+        iterator = os.listdir(TRANSACTION_DATA_PATH)
+    else:
+        iterator = [token_name]
+    
+    all_transactions = {}
+    for folder_name in iterator: # for each coin
+        transactions = []
+
+        # get all transactions for curr folder_name
         folder_path = os.path.join(TRANSACTION_DATA_PATH, folder_name)
-        for file_name in tqdm(os.listdir(folder_path), desc=f"Reading {folder_name} transactions..."): # for each transaction
+        tx_files = sorted(os.listdir(folder_path), key=lambda x: extract_number(x)) if sort else os.listdir(folder_path)
+        for file_name in tqdm(tx_files, desc=f"Reading {folder_name} transactions..."): # for each transaction
             file_path = os.path.join(folder_path, file_name)
             with open(file_path, "r") as f:
                 data = json.load(f)
                 transactions.append(data)
-    print(f"Read {len(transactions)} transactions.")
-    return transactions
+        
+        all_transactions[folder_name] = transactions
+
+    print(f"Read transactions for {len(all_transactions.keys())} tokens.")
+    
+    if token_name:
+        return transactions
+    else:
+        return all_transactions
 
 def get_dev_coin_edge():
     """
@@ -408,16 +425,22 @@ def get_wallet_dev_edges(dev_address):
     for tx in transactions:
         if tx["wallet"] != dev_address:
             edge = {
-                "wallet_id": tx["wallet"],
-                "dev_id": dev_address,
-                "amount": tx["volume"],
-                "timestamp": tx["time"],
+                "tx_address": tx["tx"],
+                "token_name": token_name,
+                "token_address": token_address,
+                "wallet_address": tx["wallet"],
+                "type": tx["type"],
+                "time": tx["time"],
+                "amount": tx["amount"],
+                "priceUsd": tx["priceUsd"],
+                "volume": tx["volume"],
+                "volumeSol": tx["volumeSol"],
             }
             edges.append(edge)
     print(f"Collected {len(edges)} wallet-dev edges.")
     return edges
 
-def get_wallet_coin_edges():
+def get_wallet_token_edges():
     """
     Extracts wallet-coin edge data from transaction_data files.
 
@@ -425,23 +448,29 @@ def get_wallet_coin_edges():
         list: A list of wallet-coin edge dictionaries.
     """
     print("Getting wallet-coin edges...")
+    with open(os.path.join(DEV_NODES_PATH, f"{token_name}.json"), "r") as f:
+        dev_address = json.load(f)["dev_address"]
+
     edges = []
-    transactions = read_transaction_data()
-    for tx in transactions:
+    transactions = read_transaction_data(token_name=token_name, sort=True)
+    for tx in transactions[:-1]: # exclude the first transaction (dev funding the token)
         edge = {
-            "wallet_id": tx["wallet"],
-            "coin_id": tx["tokenAddress"],
-            "tx_type": tx["type"],
-            "amount": tx["volume"],  # Could be SOL or token depending on tx type
-            "timestamp": tx["time"],
-            "mc_at_tx": tx.get("marketCap", None),  # Some txs may not have this
+            "tx_address": tx["tx"],
+            "token_name": token_name,
+            "token_address": token_address,
+            "wallet_address": tx["wallet"],
+            "type": tx["type"],
+            "time": tx["time"],
+            "amount": tx["amount"],
+            "priceUsd": tx["priceUsd"],
+            "volume": tx["volume"],
+            "volumeSol": tx["volumeSol"],
         }
         edges.append(edge)
     print(f"Collected {len(edges)} wallet-coin edges.")
     return edges
 
 if __name__ == "__main__":
-
         # get dev data and save it as a JSON in DEV_NODES_PATH
         dev_data = get_dev_data()
         os.makedirs(DEV_NODES_PATH, exist_ok=True)
@@ -471,16 +500,20 @@ if __name__ == "__main__":
         filename = f"{token_name}-{dev_coin_edge_data['dev_address']}.json"
         with open(os.path.join(DEV_COIN_EDGES_PATH, filename), "w") as f:
             json.dump(dev_coin_edge_data, f, indent=4)
-
+        
+        # get token data and save it as a JSON in TOKEN_NODES_PATH
         token_data = get_token_data()
         os.makedirs(TOKEN_NODES_PATH, exist_ok=True)
         with open(os.path.join(TOKEN_NODES_PATH, f"{token_name}.json"), "w") as f:
             json.dump(token_data, f, indent=4)
        
-        wallet_coin_edges = get_wallet_coin_edges()
-        os.makedirs("wallet_coin_edges", exist_ok=True)
-        with open(f"wallet_coin_edges/{token_name}.json", "w") as f:
-            json.dump(wallet_coin_edges, f, indent=4)
+        # get wallet<->token edges data and save them as JSON files in WALLET_TOKEN_EDGES_PATH/token_name/
+        wallet_token_edges = get_wallet_token_edges()
+        folder = os.path.join(WALLET_TOKEN_EDGES_PATH, token_name)
+        os.makedirs(folder, exist_ok=True)
+        for idx, edge in enumerate(wallet_token_edges):
+            with open(os.path.join(folder, f"{edge['tx_address']}.json"), "w") as f:
+                json.dump(edge, f, indent=4)
 
         dev_address = dev_coin_edge_data["dev_address"]
         wallet_dev_edges = get_wallet_dev_edges(dev_address)
