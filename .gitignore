@@ -3,4 +3,6 @@
 __pycache__
 .vscode
 .DS_Store
-logs*.txt
+logs
+*.txt
+data/*
