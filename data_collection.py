@@ -19,7 +19,7 @@ Edges:
 """
 load_dotenv()
 SOLTRACKER_API_KEY = os.getenv("SOLTRACKER_API_KEY")
-HEADERS = {"x-api-key": SOLTRACKER_API_KEY}
+SOLTRACKER_HEADERS = {"x-api-key": SOLTRACKER_API_KEY}
 SHYFT_API_KEY = os.getenv("SHYFT_API_KEY")
 
 token_name = "r/pwease"
@@ -257,7 +257,7 @@ def save_transaction_data():
         url = f"{BASE_SOLTRACKER_API_URL}/trades/{token_address}"
         url += f"?cursor={cursor}" if cursor else "" # for pagination
         
-        response = requests.get(url, headers=HEADERS)
+        response = requests.get(url, headers=SOLTRACKER_HEADERS)
         if response.status_code != 200 and not retried: # retry once
             retried = True
             print(f"Error fetching trades: {response.status_code}: {response.text}\n\nRetrying...")
@@ -364,7 +364,7 @@ def get_token_data():
         "time_to": last_tx_time
     }
     
-    response = requests.get(f"{BASE_SOLTRACKER_API_URL}/price/history/range", params=params, headers=HEADERS)
+    response = requests.get(f"{BASE_SOLTRACKER_API_URL}/price/history/range", params=params, headers=SOLTRACKER_HEADERS)
     if response.status_code != 200:
         raise Exception(f"Error fetching trades: {response.status_code}: {response.text}")
     
@@ -390,6 +390,17 @@ def get_token_data():
     return token_data
 
 def get_transaction_signatures(wallet_address, rpc_url="https://api.mainnet-beta.solana.com", verbose=False):
+    """
+    Returns all transaction signatures for a Solana wallet.
+
+    Args:
+        wallet_address (str): Wallet address to fetch signatures for.
+        rpc_url (str): Solana RPC URL (default: "https://api.mainnet-beta.solana.com").
+        verbose (bool): If True, prints additional logs (default: False).
+
+    Returns:
+        set: Transaction signatures for the wallet, or None on failure.
+    """
     os.makedirs(f"{WALLET_WALLET_EDGES_PATH}/transaction_signatures/", exist_ok=True)
     file_path = f"{WALLET_WALLET_EDGES_PATH}/transaction_signatures/{wallet_address}.txt"
     if os.path.exists(file_path):
@@ -440,6 +451,23 @@ def get_transaction_signatures(wallet_address, rpc_url="https://api.mainnet-beta
     return signature_hashes
 
 def parse_transaction(tx_data, signature):
+    """
+    A helper function that extracts and returns relevant data from the given transaction data.
+
+    Args:
+        tx_data (dict): The transaction data retrieved from the RPC.
+        signature (str): The unique signature of the transaction.
+
+    Returns:
+        dict: A dictionary containing the parsed transaction details with the following keys:
+            - "signature" (str): The transaction signature.
+            - "from" (str or None): The sender's address, if identifiable.
+            - "to" (str or None): The recipient's address, if identifiable.
+            - "type" (str or None): The type of transaction (e.g., "transfer", "unknown").
+            - "time" (int): The block time of the transaction (default is 0 if unavailable).
+            - "amount" (float): The amount of tokens transferred (default is 0 if unavailable).
+            - "token_address" (str or None): The address of the token involved in the transaction.
+    """
     result = {
         "signature": signature,
         "from": None,
@@ -484,7 +512,20 @@ def parse_transaction(tx_data, signature):
     return result
 
 
-def get_transfer_transactions(wallet1, wallet2, rpc_url="https://api.mainnet-beta.solana.com", verbose=False):
+def get_transfer_transactions(wallet1, wallet2, base_path, rpc_url="https://api.mainnet-beta.solana.com", verbose=False):
+    """
+    Returns a list of transfer transactions (as dicts) between two wallets.
+
+    Args:
+        wallet1 (str): The first wallet address.
+        wallet2 (str): The second wallet address.
+        base_path (str): The base path to save logs & data.
+        rpc_url (str): The Solana RPC URL to use for fetching transaction data.
+        verbose (bool): If True, print additional loggging information.
+    
+    Returns:
+        list: A list of transfer transactions (as dicts) between the two wallets.
+    """
     w1_signatures = get_transaction_signatures(wallet1, rpc_url, verbose=verbose)
     w2_signatures = get_transaction_signatures(wallet2, rpc_url, verbose=verbose)
     if not w1_signatures or not w2_signatures:
@@ -495,8 +536,8 @@ def get_transfer_transactions(wallet1, wallet2, rpc_url="https://api.mainnet-bet
         return None
 
     tqdm.write(f"Found {len(common_signatures)} common transaction signatures between the two wallets.")
-    os.makedirs(f"{WALLET_WALLET_EDGES_PATH}/raw/", exist_ok=True)
-    with open(f"{WALLET_WALLET_EDGES_PATH}/raw/common_signatures.txt", "a") as f:
+    os.makedirs(f"{base_path}/raw/", exist_ok=True)
+    with open(f"{base_path}/raw/common_signatures.txt", "a") as f:
         for signature in common_signatures:
             f.write(f"{signature}\n")
 
@@ -536,11 +577,11 @@ def get_transfer_transactions(wallet1, wallet2, rpc_url="https://api.mainnet-bet
             tqdm.write(f"\t{response.content}")
             continue
         
-        os.makedirs(f"{WALLET_WALLET_EDGES_PATH}/raw/", exist_ok=True)
-        with open(f"{WALLET_WALLET_EDGES_PATH}/raw/{signature}.json", "w") as f:
+        os.makedirs(f"{base_path}/raw/", exist_ok=True)
+        with open(f"{base_path}/raw/{signature}.json", "w") as f:
             json.dump(tx_data, f, indent=4)
 
-        if tx_data["meta"].get("preTokenBalances"): # if not a valid format/not a token transfer
+        if tx_data["meta"].get("preTokenBalances"): # if its in a valid format/ a token transfer (not sol transfer)
             tx_data = parse_transaction(tx_data, signature)
             transactions.append(tx_data)
             if verbose:
@@ -550,7 +591,7 @@ def get_transfer_transactions(wallet1, wallet2, rpc_url="https://api.mainnet-bet
 
     return transactions
 
-def get_wallet_wallet_edges(verbose=False):
+def save_wallet_wallet_edges(verbose=False):
     """
     Derives wallet-wallet edges from transactions that include both sender and receiver wallets.
 
@@ -573,9 +614,9 @@ def get_wallet_wallet_edges(verbose=False):
     
     # Generate all unique wallet pairs (no (A, A) and no (B, A) if (A, B) exists)
     wallet_pairs = list(combinations(involved_wallets, 2))
-    print("num of pairs: ", len(wallet_pairs))
+    print("num of wallet-wallet pairs: ", len(wallet_pairs))
     for w1, w2 in tqdm(wallet_pairs, desc="Getting wallet-wallet edges..."):
-        transactions = get_transfer_transactions(w1, w2, verbose=verbose, rpc_url="https://rpc.shyft.to?api_key={SHYFT_API_KEY}")
+        transactions = get_transfer_transactions(w1, w2, verbose=verbose, rpc_url=f"https://rpc.shyft.to?api_key={SHYFT_API_KEY}")
         if transactions:
             for transaction in transactions:
                 file_path = f"{WALLET_WALLET_EDGES_PATH}/{token_name}/{transaction['from']}-{transaction['to']}.json" if transaction["from"] and transaction["to"] else f"{WALLET_WALLET_EDGES_PATH}/{token_name}/{transaction['signature']}.json"
@@ -585,7 +626,7 @@ def get_wallet_wallet_edges(verbose=False):
             
     print("Saved wallet-wallet edges.")
 
-def get_wallet_dev_edges(dev_address):
+def save_wallet_dev_edges(base_path, verbose=False):
     """
     Constructs wallet-dev edge data using transactions that interact with the dev.
 
@@ -597,7 +638,36 @@ def get_wallet_dev_edges(dev_address):
     """
     
     print("Getting wallet-dev edges...")
+    # get dev address
+    with open(os.path.join(DEV_NODES_PATH, f"{token_name}.json"), "r") as f:
+        dev_address = json.load(f)["dev_address"]
 
+    # get all buying and selling wallets from token transaction data
+    involved_wallets = set()
+    transactions = read_transaction_data(token_name)
+    print("num of transactions: ", len(transactions))
+    for tx in transactions:
+        if tx["wallet"] != dev_address:
+            involved_wallets.add(tx["wallet"])
+    print("num of involved wallets: ", len(involved_wallets))
+    
+    os.makedirs(f"{base_path}/{token_name}", exist_ok=True)
+    
+    # Generate all wallet pairs with dev wallet
+    wallet_pairs = [(dev_address, w) for w in involved_wallets]
+    print("num of wallet-dev pairs: ", len(wallet_pairs))
+    for w1, w2 in tqdm(wallet_pairs, desc="Getting wallet-wallet edges..."):
+        # get all transactions between w1 and w2
+        transactions = get_transfer_transactions(w1, w2, base_path, verbose=verbose, rpc_url=f"https://rpc.shyft.to?api_key={SHYFT_API_KEY}")
+        # save all transactions between w1 and w2 (if any)
+        if transactions:
+            for transaction in transactions:
+                file_path = f"{base_path}/{token_name}/{transaction['from']}-{transaction['to']}.json" if transaction["from"] and transaction["to"] else f"{WALLET_WALLET_EDGES_PATH}/{token_name}/{transaction['signature']}.json"
+                with open(file_path, "w") as f:
+                    json.dump(transaction, f, indent=4)
+                tqdm.write(f"Saved transaction data for {transaction['signature'][:5]}...")            
+            
+    print("Saved wallet-dev edges.")
 
 def get_wallet_token_edges():
     """
@@ -630,61 +700,55 @@ def get_wallet_token_edges():
     return edges
 
 if __name__ == "__main__":
-        # # get dev data and save it as a JSON in DEV_NODES_PATH
-        # dev_data = get_dev_data()
-        # os.makedirs(DEV_NODES_PATH, exist_ok=True)
-        # with open(os.path.join(DEV_NODES_PATH, f"{token_name}.json"), "w") as f:
-        #     json.dump(dev_data, f, indent=4)
+        # get dev data and save it as a JSON in DEV_NODES_PATH
+        dev_data = get_dev_data()
+        os.makedirs(DEV_NODES_PATH, exist_ok=True)
+        with open(os.path.join(DEV_NODES_PATH, f"{token_name}.json"), "w") as f:
+            json.dump(dev_data, f, indent=4)
         
-        # save_transaction_data()
+        save_transaction_data()
 
-        # # try to save wallet data. if an error occurs, retry up to 15 times
-        # retries = 15
-        # for attempt in range(retries):
-        #     try:
-        #         save_wallet_data()
-        #         break
-        #     except Exception as e:
-        #         print(f"Attempt {attempt + 1} failed: {e}")
-        #         if attempt < retries - 1:
-        #             time.sleep(2)
-        #         else:
-        #             print("Max retries reached. Exiting.")
-        #             raise
+        # try to save wallet data. if an error occurs, retry up to 15 times
+        retries = 15
+        for attempt in range(retries):
+            try:
+                save_wallet_data()
+                break
+            except Exception as e:
+                print(f"Attempt {attempt + 1} failed: {e}")
+                if attempt < retries - 1:
+                    time.sleep(2)
+                else:
+                    print("Max retries reached. Exiting.")
+                    raise
 
-
-        # # get dev<->coin edge data and save it as a JSON in DEV_COIN_EDGES_PATH
-        # dev_coin_edge_data = get_dev_coin_edge()
-        # os.makedirs(DEV_COIN_EDGES_PATH, exist_ok=True)
-        # filename = f"{token_name}-{dev_coin_edge_data['dev_address']}.json"
-        # with open(os.path.join(DEV_COIN_EDGES_PATH, filename), "w") as f:
-        #     json.dump(dev_coin_edge_data, f, indent=4)
+        # get dev<->coin edge data and save it as a JSON in DEV_COIN_EDGES_PATH
+        dev_coin_edge_data = get_dev_coin_edge()
+        os.makedirs(DEV_COIN_EDGES_PATH, exist_ok=True)
+        filename = f"{token_name}-{dev_coin_edge_data['dev_address']}.json"
+        with open(os.path.join(DEV_COIN_EDGES_PATH, filename), "w") as f:
+            json.dump(dev_coin_edge_data, f, indent=4)
         
-        # # get token data and save it as a JSON in TOKEN_NODES_PATH
-        # token_data = get_token_data()
-        # os.makedirs(TOKEN_NODES_PATH, exist_ok=True)
-        # with open(os.path.join(TOKEN_NODES_PATH, f"{token_name}.json"), "w") as f:
-        #     json.dump(token_data, f, indent=4)
+        # get token data and save it as a JSON in TOKEN_NODES_PATH
+        token_data = get_token_data()
+        os.makedirs(TOKEN_NODES_PATH, exist_ok=True)
+        with open(os.path.join(TOKEN_NODES_PATH, f"{token_name}.json"), "w") as f:
+            json.dump(token_data, f, indent=4)
        
-        # # get wallet<->token edges data and save them as JSON files in WALLET_TOKEN_EDGES_PATH/token_name/
-        # wallet_token_edges = get_wallet_token_edges()
-        # folder = os.path.join(WALLET_TOKEN_EDGES_PATH, token_name)
-        # os.makedirs(folder, exist_ok=True)
-        # for idx, edge in enumerate(wallet_token_edges):
-        #     with open(os.path.join(folder, f"{edge['tx_address']}.json"), "w") as f:
-        #         json.dump(edge, f, indent=4)
+        # get wallet<->token edges data and save them as JSON files in WALLET_TOKEN_EDGES_PATH/token_name/
+        wallet_token_edges = get_wallet_token_edges()
+        folder = os.path.join(WALLET_TOKEN_EDGES_PATH, token_name)
+        os.makedirs(folder, exist_ok=True)
+        for idx, edge in enumerate(wallet_token_edges):
+            with open(os.path.join(folder, f"{edge['tx_address']}.json"), "w") as f:
+                json.dump(edge, f, indent=4)
 
-        get_wallet_wallet_edges(verbose=False)
-        # os.makedirs(f"wallet_wallet_edges/{token_name}", exist_ok=True)
-        # for edge in wallet_wallet_edges:
-        #     with open(f"{WALLET_WALLET_EDGES_PATH}/{token_name}/{edge['from']}-{edge['to']}.json", "w") as f:
-        #         json.dump(edge, f, indent=4)
-        exit()
-
-        wallet_dev_edges = get_wallet_dev_edges()
-        os.makedirs("wallet_dev_edges", exist_ok=True)
-        with open(f"wallet_dev_edges/{token_name}-{dev_address}.json", "w") as f:
-            json.dump(wallet_dev_edges, f, indent=4)
-        exit()
+        # get wallet<->wallet edges data and save them as JSON files in WALLET_WALLET_EDGES_PATH/token_name/
+        # log files will be created in WALLET_DEV_EDGES_PATH/token_name/raw and transaction_signatures
+        save_wallet_wallet_edges(verbose=False, base_path=WALLET_WALLET_EDGES_PATH)
+        
+        # get wallet<->dev edges data and save them as JSON files in WALLET_DEV_EDGES_PATH/token_name/
+        # log files will be created in WALLET_DEV_EDGES_PATH/token_name/raw and transaction_signatures
+        save_wallet_dev_edges(verbose=True, base_path=WALLET_DEV_EDGES_PATH)
 
         print("Finished data collection!")
