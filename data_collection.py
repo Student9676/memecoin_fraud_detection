@@ -20,6 +20,7 @@ Edges:
 load_dotenv()
 SOLTRACKER_API_KEY = os.getenv("SOLTRACKER_API_KEY")
 HEADERS = {"x-api-key": SOLTRACKER_API_KEY}
+SHYFT_API_KEY = os.getenv("SHYFT_API_KEY")
 
 token_name = "r/pwease"
 token_name = re.sub(r"[^\w\-]", "_", token_name) # replace special characters with underscores
@@ -574,7 +575,7 @@ def get_wallet_wallet_edges(verbose=False):
     wallet_pairs = list(combinations(involved_wallets, 2))
     print("num of pairs: ", len(wallet_pairs))
     for w1, w2 in tqdm(wallet_pairs, desc="Getting wallet-wallet edges..."):
-        transactions = get_transfer_transactions(w1, w2, verbose=verbose, rpc_url="https://rpc.shyft.to?api_key=GqZbdloNpTQ0CUvQ")
+        transactions = get_transfer_transactions(w1, w2, verbose=verbose, rpc_url="https://rpc.shyft.to?api_key={SHYFT_API_KEY}")
         if transactions:
             for transaction in transactions:
                 file_path = f"{WALLET_WALLET_EDGES_PATH}/{token_name}/{transaction['from']}-{transaction['to']}.json" if transaction["from"] and transaction["to"] else f"{WALLET_WALLET_EDGES_PATH}/{token_name}/{transaction['signature']}.json"
