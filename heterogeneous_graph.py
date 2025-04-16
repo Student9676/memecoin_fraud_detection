@@ -79,14 +79,11 @@ def save_graph(G, base_path, token_name):
     nx.write_gpickle(G, path)
     print(f"Graph saved to {path}")
 
-def main():
-    base_path = "/Users/drew/Desktop/CS/CS485/data" 
+if __name__ == "__main__":
+    base_path = "/Users/drew/Library/CloudStorage/OneDrive-Personal/cs485 final project" 
     token_name = "r_pwease"  
 
     print(f"Creating heterogeneous graph for token: {token_name}")
     G = create_heterogeneous_graph(base_path, token_name)
     save_graph(G, base_path, token_name)
     print(f"Graph has {G.number_of_nodes()} nodes and {G.number_of_edges()} edges.")
-
-if __name__ == "__main__":
-    main()
