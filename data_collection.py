@@ -10,23 +10,27 @@ import time
 from tqdm import tqdm
 from itertools import combinations
 
-"""
-Nodes:
-- Dev Attributes: id (api), num tokens created before (webscrape), num rugpull tokens created
-- Wallet Attributes: id, balance (coin & sol -- before any investment and after final transaction?**), rugpull association, num transactions, num transfers, creation age (ALL WEBSCRAPE)
-Edges:
-- Dev-coin Attributes: id, creation time, starting balance/mc (WEBSCRAPE)
-"""
+# API keys + URLs
 load_dotenv()
 SOLTRACKER_API_KEY = os.getenv("SOLTRACKER_API_KEY")
 SOLTRACKER_HEADERS = {"x-api-key": SOLTRACKER_API_KEY}
 SHYFT_API_KEY = os.getenv("SHYFT_API_KEY")
+BASE_SOLTRACKER_API_URL = "https://data.solanatracker.io"
+BASE_SOLSCAN_URL = "https://solscan.io"
 
-token_name = "r/pwease"
-token_name = re.sub(r"[^\w\-]", "_", token_name) # replace special characters with underscores
-token_address = "H8AyUYyjzVLxkkDHDShd671YrtziroNc8HjfXDnypump"
+# Tokens to collect data for
+tokens = [("r/pwease", "H8AyUYyjzVLxkkDHDShd671YrtziroNc8HjfXDnypump"),
+          ]
+
+# Token info (temp global variables)
+token_name = ""
+token_address = ""
+
+# Collection algo args
 get_cookies = True
 headless = False
+
+# File paths
 COOKIES_PATH = "cookies.json"
 DEV_NODES_PATH = "data/dev_nodes"
 TOKEN_NODES_PATH = "data/token_nodes"
@@ -36,8 +40,6 @@ WALLET_TOKEN_EDGES_PATH = "data/wallet_token_edges"
 DEV_COIN_EDGES_PATH = "data/dev_coin_edges"
 WALLET_WALLET_EDGES_PATH = "data/wallet_wallet_edges"
 WALLET_DEV_EDGES_PATH = "data/wallet_dev_edges"
-BASE_SOLTRACKER_API_URL = "https://data.solanatracker.io"
-BASE_SOLSCAN_URL = "https://solscan.io"
 
 def extract_number(text: str) -> int:
     """
@@ -159,11 +161,11 @@ def save_wallet_data():
     wallet address associated with the transactions in the transaction data. It saves
     a JSON file for each wallet address in the WALLET_NODES_PATH directory containing 
     the wallet address, number of transfers, number of defi activities, and a rugpull 
-    association boolean. This function also creates a logs/log.txt to allow resuming
-    after interruptions.
+    association boolean. This function also creates a logs/wallets_to_collect.log to 
+    allow resuming after interruptions.
     """
     # if log file DNE or is empty, we start from scratch
-    if not os.path.exists("logs/log.txt") or os.stat("logs/log.txt").st_size == 0:
+    if not os.path.exists("logs/wallets_to_collect.log") or os.stat("logs/wallets_to_collect.log").st_size == 0:
         print("Getting wallet data...")
         # get all unique wallet addresses from the transaction data
         transactions = read_transaction_data()
@@ -173,15 +175,15 @@ def save_wallet_data():
         wallet_addresses = sorted(list(wallet_addresses))
         # save all wallet addresses in the log file
         os.makedirs("logs", exist_ok=True)
-        with open("logs/log.txt", "w") as f:
+        with open("logs/wallets_to_collect.log", "w") as f:
             for wallet_address in wallet_addresses:
                 f.write(f"{wallet_address}\n")
-    # continue where we left off: from the first address in log.txt
+    # continue where we left off: from the first address in wallets_to_collect.log
     else:
         print("Continuing getting wallet data...")
         # read wallet addresses from log
         wallet_addresses = []
-        with open("logs/log.txt", "r") as f:
+        with open("logs/wallets_to_collect.log", "r") as f:
             for line in f:
                 wallet_addresses.append(line.strip())
         # get cookies again because interruption is likely due to human cookies expiring
@@ -228,10 +230,10 @@ def save_wallet_data():
                 json.dump(wallet_data, f, indent=4)
 
             # remove the top most wallet address from the log since we have saved its data
-            with open("logs/log.txt", "r") as f:
+            with open("logs/wallets_to_collect.log", "r") as f:
                 lines = f.readlines()
                 lines = lines[1:] # remove the first address
-            with open("logs/log.txt", "w") as f:
+            with open("logs/wallets_to_collect.log", "w") as f:
                 for line in lines:
                     f.write(line) # write all the addresses except for the first one
         browser.close()
@@ -699,56 +701,134 @@ def get_wallet_token_edges():
     print(f"Collected {len(edges)} wallet-coin edges.")
     return edges
 
+def log_data_collection(data_type):
+    """
+    Logs the data collection status to a file.
+
+    Args:
+        data_type (str): The type of data that was collected.
+    """
+    with open("logs/completed_data_collection.log", "a") as f:
+        f.write(f"{data_type}\n")
+
 if __name__ == "__main__":
+
+    # Save all tokens to a log file if it doesn't already exist
+    os.makedirs("logs", exist_ok=True)
+    tokens_log_path = "logs/tokens_to_collect.log"
+    if not os.path.exists(tokens_log_path) or os.stat(tokens_log_path).st_size == 0:
+        with open(tokens_log_path, "w") as f:
+            for name, address in tokens:
+                f.write(f"{name},{address}\n")
+
+    # Get the last data collected from the log file
+    data_collection_log_path = "logs/completed_data_collection.log"
+    if os.path.exists(data_collection_log_path):
+        with open(data_collection_log_path, "r") as f:
+            last_data_collected = [line.strip() for line in f.readlines()]
+    else:
+        last_data_collected = None
+
+    # Read tokens from the log file
+    with open(tokens_log_path, "r") as f:
+        tokens = [line.strip().split(",") for line in f]
+
+    # Collect data for each token
+    for name, address in tokens:
+        token_name = re.sub(r"[^\w\-]", "_", name) # replace special characters with underscores
+        token_address = address
+
         # get dev data and save it as a JSON in DEV_NODES_PATH
-        dev_data = get_dev_data()
-        os.makedirs(DEV_NODES_PATH, exist_ok=True)
-        with open(os.path.join(DEV_NODES_PATH, f"{token_name}.json"), "w") as f:
-            json.dump(dev_data, f, indent=4)
+        if last_data_collected and "dev_nodes" in last_data_collected:
+            print(f"Skipping dev_nodes collection since it was already collected.")
+        else:
+            dev_data = get_dev_data()
+            os.makedirs(DEV_NODES_PATH, exist_ok=True)
+            with open(os.path.join(DEV_NODES_PATH, f"{token_name}.json"), "w") as f:
+                json.dump(dev_data, f, indent=4)
+            log_data_collection("dev_nodes")
         
-        save_transaction_data()
+        # get transaction data and save it as a JSON files in TRANSACTION_DATA_PATH
+        if last_data_collected and "transaction_data" in last_data_collected:
+            print(f"Skipping transaction data collection since it was already collected.")
+        else:
+            save_transaction_data()
+            log_data_collection("transaction_data")
 
         # try to save wallet data. if an error occurs, retry up to 15 times
-        retries = 15
-        for attempt in range(retries):
-            try:
-                save_wallet_data()
-                break
-            except Exception as e:
-                print(f"Attempt {attempt + 1} failed: {e}")
-                if attempt < retries - 1:
-                    time.sleep(2)
-                else:
-                    print("Max retries reached. Exiting.")
-                    raise
+        if last_data_collected and "wallet_nodes" in last_data_collected:
+            print(f"Skipping wallet_nodes collection since it was already collected.")
+        else:
+            retries = 15
+            for attempt in range(retries):
+                try:
+                    save_wallet_data()
+                    break
+                except Exception as e:
+                    print(f"Attempt {attempt + 1} failed: {e}")
+                    if attempt < retries - 1:
+                        time.sleep(2)
+                    else:
+                        print("Max retries reached. Exiting.")
+                        raise
+            log_data_collection("wallet_nodes")
 
         # get dev<->coin edge data and save it as a JSON in DEV_COIN_EDGES_PATH
-        dev_coin_edge_data = get_dev_coin_edge()
-        os.makedirs(DEV_COIN_EDGES_PATH, exist_ok=True)
-        filename = f"{token_name}-{dev_coin_edge_data['dev_address']}.json"
-        with open(os.path.join(DEV_COIN_EDGES_PATH, filename), "w") as f:
-            json.dump(dev_coin_edge_data, f, indent=4)
-        
+        if last_data_collected and "dev_coin_edges" in last_data_collected:
+            print(f"Skipping dev_coin_edges collection since it was already collected.")
+        else:
+            dev_coin_edge_data = get_dev_coin_edge()
+            os.makedirs(DEV_COIN_EDGES_PATH, exist_ok=True)
+            filename = f"{token_name}-{dev_coin_edge_data['dev_address']}.json"
+            with open(os.path.join(DEV_COIN_EDGES_PATH, filename), "w") as f:
+                json.dump(dev_coin_edge_data, f, indent=4)
+            log_data_collection("dev_coin_edges")
+
         # get token data and save it as a JSON in TOKEN_NODES_PATH
-        token_data = get_token_data()
-        os.makedirs(TOKEN_NODES_PATH, exist_ok=True)
-        with open(os.path.join(TOKEN_NODES_PATH, f"{token_name}.json"), "w") as f:
-            json.dump(token_data, f, indent=4)
-       
+        if last_data_collected and "token_nodes" in last_data_collected:
+            print(f"Skipping token_nodes collection since it was already collected.")
+        else:
+            token_data = get_token_data()
+            os.makedirs(TOKEN_NODES_PATH, exist_ok=True)
+            with open(os.path.join(TOKEN_NODES_PATH, f"{token_name}.json"), "w") as f:
+                json.dump(token_data, f, indent=4)
+            log_data_collection("token_nodes")
+            
         # get wallet<->token edges data and save them as JSON files in WALLET_TOKEN_EDGES_PATH/token_name/
-        wallet_token_edges = get_wallet_token_edges()
-        folder = os.path.join(WALLET_TOKEN_EDGES_PATH, token_name)
-        os.makedirs(folder, exist_ok=True)
-        for idx, edge in enumerate(wallet_token_edges):
-            with open(os.path.join(folder, f"{edge['tx_address']}.json"), "w") as f:
-                json.dump(edge, f, indent=4)
+        if last_data_collected and "wallet_token_edges" in last_data_collected:
+            print(f"Skipping wallet_token_edges collection since it was already collected.")
+        else:
+            wallet_token_edges = get_wallet_token_edges()
+            folder = os.path.join(WALLET_TOKEN_EDGES_PATH, token_name)
+            os.makedirs(folder, exist_ok=True)
+            for idx, edge in enumerate(wallet_token_edges):
+                with open(os.path.join(folder, f"{edge['tx_address']}.json"), "w") as f:
+                    json.dump(edge, f, indent=4)
+            log_data_collection("wallet_token_edges")
 
         # get wallet<->wallet edges data and save them as JSON files in WALLET_WALLET_EDGES_PATH/token_name/
         # log files will be created in WALLET_DEV_EDGES_PATH/token_name/raw and transaction_signatures
-        save_wallet_wallet_edges(verbose=False, base_path=WALLET_WALLET_EDGES_PATH)
-        
+        if last_data_collected and "wallet_wallet_edges" in last_data_collected:
+            print(f"Skipping wallet_wallet_edges collection since it was already collected.")
+        else:
+            save_wallet_wallet_edges(verbose=False, base_path=WALLET_WALLET_EDGES_PATH)
+            log_data_collection("wallet_wallet_edges")
+
         # get wallet<->dev edges data and save them as JSON files in WALLET_DEV_EDGES_PATH/token_name/
         # log files will be created in WALLET_DEV_EDGES_PATH/token_name/raw and transaction_signatures
-        save_wallet_dev_edges(verbose=True, base_path=WALLET_DEV_EDGES_PATH)
+        save_wallet_dev_edges(verbose=False, base_path=WALLET_DEV_EDGES_PATH)
+        log_data_collection("wallet_dev_edges")
 
-        print("Finished data collection!")
+        # Remove the current token,address from the log file
+        with open(tokens_log_path, "r") as f:
+            lines = f.readlines()
+        lines = [line for line in lines if line.strip() != f"{name},{address}"]
+        with open(tokens_log_path, "w") as f:
+            f.writelines(lines)
+        
+        # clear the log file for completed data collection
+        with open(data_collection_log_path, "w") as f:
+            pass
+
+        print(f"Finished data collection for {token_name}!")
+    print("Finished ALL data collection!")
