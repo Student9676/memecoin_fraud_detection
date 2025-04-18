@@ -18,13 +18,14 @@ Edges:
 """
 load_dotenv()
 SOLTRACKER_API_KEY = os.getenv("SOLTRACKER_API_KEY")
+SOLTRACKER_API_KEY = "bf14fc87-65f6-4e6d-8e79-806e8d4b48f4"
 HEADERS = {"x-api-key": SOLTRACKER_API_KEY}
 
 token_name = "r/pwease"
 token_name = re.sub(r"[^\w\-]", "_", token_name) # replace special characters with underscores
 token_address = "H8AyUYyjzVLxkkDHDShd671YrtziroNc8HjfXDnypump"
 get_cookies = False
-headless = True
+headless = False
 COOKIES_PATH = "cookies.json"
 DEV_NODES_PATH = "dev_nodes"
 WALLET_NODES_PATH = "wallet_nodes"
@@ -271,6 +272,131 @@ def get_dev_data():
         print("Dev data returned.")
         return dev_data
 
+def get_coin_data():
+    """
+    Retrieves coin attributes (coin id, market cap, rugpull flag, dev id) from Solana Tracker API or Solscan web scraping.
+    Returns dictionary containing coin id, market cap, rugpull, and dev id
+    """
+    print("Getting coin data...")
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=headless)
+        context = browser.new_context()
+
+        if get_cookies:
+            cookie_loader.get_cookies(COOKIES_PATH)
+        # Load cookies from saved file
+        cookies = load_cookies(COOKIES_PATH)
+        context.add_cookies(cookies)
+
+        page = context.new_page()
+        
+        # Go to token page on Solscan
+        token_url = f"{BASE_SOLSCAN_URL}/token/{token_address}"
+        page.goto(token_url)
+        page.wait_for_load_state("networkidle")
+
+        # Coin ID (use token address as ID)
+        coin_id = token_address
+
+        # Market Cap
+        market_cap_selector = "div.grid.grid-cols-2.md\\:grid-cols-4 > div:nth-child(3) div.text-white"
+        market_cap_text = page.locator(market_cap_selector).inner_text()
+        market_cap_clean = market_cap_text.replace("$", "").replace(",", "").strip()
+        market_cap = float(market_cap_clean)
+
+        # Rugpull flag — infer based on heuristics or default to 0
+        rugpull_flag = 0  # You could later add logic to label based on tx patterns, drops, or API indicators
+
+        # Developer ID from previously defined logic
+        page.locator("button[aria-controls='radix-:r1t:']").click()
+        page.wait_for_selector("div[data-state='open']")
+        dev_id = page.locator("div[data-state='open'] a.text-current").get_attribute("href").split("/")[-1]
+
+        browser.close()
+
+        coin_data = {
+            "coin_id": coin_id,
+            "market_cap": market_cap,
+            "rugpull": rugpull_flag,
+            "dev_id": dev_id,
+        }
+
+        print("Coin data retrieved.")
+        return coin_data
+
+def get_wallet_wallet_edges():
+    """
+    Derives wallet-wallet edges from transactions that include both sender and receiver wallets.
+
+    Returns:
+        list: A list of wallet-wallet edge dictionaries.
+    """
+    print("Getting wallet-wallet edges...")
+    edges = []
+    transactions = read_transaction_data()
+    for tx in transactions:
+        from_wallet = tx.get("from", None)
+        to_wallet = tx.get("wallet", None)
+        if from_wallet and to_wallet and from_wallet != to_wallet:
+            edge = {
+                "from_wallet": from_wallet,
+                "to_wallet": to_wallet,
+                "amount": tx["volume"],
+                "timestamp": tx["time"],
+            }
+            edges.append(edge)
+    print(f"Collected {len(edges)} wallet-wallet edges.")
+    return edges
+
+def get_wallet_dev_edges(dev_address):
+    """
+    Constructs wallet-dev edge data using transactions that interact with the dev.
+
+    Args:
+        dev_address (str): The developer's wallet address.
+
+    Returns:
+        list: A list of wallet-dev edge dictionaries.
+    """
+    print("Getting wallet-dev edges...")
+    edges = []
+    transactions = read_transaction_data()
+    for tx in transactions:
+        if tx["wallet"] != dev_address:
+            edge = {
+                "wallet_id": tx["wallet"],
+                "dev_id": dev_address,
+                "amount": tx["volume"],
+                "timestamp": tx["time"],
+            }
+            edges.append(edge)
+    print(f"Collected {len(edges)} wallet-dev edges.")
+    return edges
+
+def get_wallet_coin_edges():
+    """
+    Extracts wallet-coin edge data from transaction_data files.
+
+    Returns:
+        list: A list of wallet-coin edge dictionaries.
+    """
+    print("Getting wallet-coin edges...")
+    edges = []
+    transactions = read_transaction_data()
+    for tx in transactions:
+        edge = {
+            "wallet_id": tx["wallet"],
+            "coin_id": tx["tokenAddress"],
+            "tx_type": tx["type"],
+            "amount": tx["volume"],  # Could be SOL or token depending on tx type
+            "timestamp": tx["time"],
+            "mc_at_tx": tx.get("marketCap", None),  # Some txs may not have this
+        }
+        edges.append(edge)
+    print(f"Collected {len(edges)} wallet-coin edges.")
+    return edges
+
 if __name__ == "__main__":
 
         # get dev data and save it as a JSON in DEV_NODES_PATH
@@ -278,10 +404,16 @@ if __name__ == "__main__":
         os.makedirs(DEV_NODES_PATH, exist_ok=True)
         with open(os.path.join(DEV_NODES_PATH, f"{token_name}.json"), "w") as f:
             json.dump(dev_data, f, indent=4)
+        print(SOLTRACKER_API_KEY)
+        SOLTRACKER_API_KEY = "bf14fc87-65f6-4e6d-8e79-806e8d4b48f4"
         
         save_transaction_data()
-
         save_wallet_data()
+
+        coin_data = get_coin_data()
+        os.makedirs(DEV_NODES_PATH, exist_ok=True)
+        with open(os.path.join(DEV_NODES_PATH, f"{token_name}_coin.json"), "w") as f:
+            json.dump(coin_data, f, indent=4)
 
         # get dev<->coin edge data and save it as a JSON in DEV_COIN_EDGES_PATH
         dev_coin_edge_data = get_dev_coin_edge()
@@ -289,5 +421,23 @@ if __name__ == "__main__":
         filename = f"{token_name}-{dev_coin_edge_data['dev_address']}.json"
         with open(os.path.join(DEV_COIN_EDGES_PATH, filename), "w") as f:
             json.dump(dev_coin_edge_data, f, indent=4)
+
+       
+        wallet_coin_edges = get_wallet_coin_edges()
+        os.makedirs("wallet_coin_edges", exist_ok=True)
+        with open(f"wallet_coin_edges/{token_name}.json", "w") as f:
+            json.dump(wallet_coin_edges, f, indent=4)
+
+        dev_address = dev_coin_edge_data["dev_address"]
+        wallet_dev_edges = get_wallet_dev_edges(dev_address)
+        os.makedirs("wallet_dev_edges", exist_ok=True)
+        with open(f"wallet_dev_edges/{token_name}-{dev_address}.json", "w") as f:
+            json.dump(wallet_dev_edges, f, indent=4)
+
+    
+        wallet_wallet_edges = get_wallet_wallet_edges()
+        os.makedirs("wallet_wallet_edges", exist_ok=True)
+        with open(f"wallet_wallet_edges/{token_name}.json", "w") as f:
+            json.dump(wallet_wallet_edges, f, indent=4)
 
         print("Finished data collection!")
