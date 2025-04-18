@@ -3,11 +3,12 @@ from selenium.webdriver.chrome.options import Options
 import time
 import json
 
-def get_cookies(cookie_file_path):
+def get_cookies(cookie_file_path, headless=False):
+    print("Getting cookies...")
     options = Options()
 
-    # DONT run in headless mode
-    # options.add_argument("--headless")
+    if headless:
+        options.add_argument("--headless")
 
     # add headers manually to make it look like a real user
     options.add_argument("start-maximized")
