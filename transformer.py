@@ -42,15 +42,16 @@ def load_graph_and_convert(base_path, token_name):
     data = convert_to_pyg_data(G)
     return data
 
-base_path = '/path/to/your/data'
-token_name = 'your_token_name'
-data = load_graph_and_convert(base_path, token_name)
+if __name__ == __main__:
+    base_path = '/User/drew/Desktop/heterographs
+    token_name = 'r_pwease'
+    data = load_graph_and_convert(base_path, token_name)
 
-in_channels = 16  
-hidden_channels = 32
-out_channels = 2  
-num_relations = 3  
-model = HGTModel(in_channels, hidden_channels, out_channels, num_relations)
-optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-out = model(data)
-print(out)
+    in_channels = 16  
+    hidden_channels = 32
+    out_channels = 2  
+    num_relations = 3  
+    model = HGTModel(in_channels, hidden_channels, out_channels, num_relations)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+    out = model(data)
+    print(out)
