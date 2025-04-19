@@ -1,7 +1,7 @@
 import os
 import json
-from torch_geometric.data import HeteroData
 import torch
+from torch_geometric.data import HeteroData
 
 def load_wallet_wallet_edges(path):
     edges = []
@@ -10,9 +10,9 @@ def load_wallet_wallet_edges(path):
         if filename.endswith(".json"):
             with open(os.path.join(path, filename), "r") as f:
                 tx = json.load(f)
-                if tx["from"] and tx["to"]:
+                if tx.get("from") and tx.get("to"):
                     edges.append((tx["from"], tx["to"]))
-                    weights.append(tx["amount"])
+                    weights.append(tx.get("amount", 0.0))
     return edges, weights
 
 def load_wallet_dev_edges(path):
@@ -22,44 +22,67 @@ def load_wallet_dev_edges(path):
         if filename.endswith(".json"):
             with open(os.path.join(path, filename), "r") as f:
                 tx = json.load(f)
-                if tx["from"] and tx["to"]:
+                if tx.get("from") and tx.get("to"):
                     edges.append((tx["from"], tx["to"]))
-                    weights.append(tx["amount"])
+                    weights.append(tx.get("amount", 0.0))
     return edges, weights
 
 def load_wallet_token_edges(path):
-    edges_buy = []
-    edges_sell = []
-    attrs_buy = []
-    attrs_sell = []
+    edges_buy, edges_sell = [], []
+    attrs_buy, attrs_sell = [], []
     for filename in os.listdir(path):
         if filename.endswith(".json"):
             with open(os.path.join(path, filename), "r") as f:
                 tx = json.load(f)
-                if tx["wallet_address"] and tx["token_address"]:
-                    edge_type = tx["type"]
+                if tx.get("wallet_address") and tx.get("token_address"):
                     attrs = {
-                        "amount": tx["amount"],
-                        "priceUsd": tx["priceUsd"],
-                        "volume": tx["volume"],
-                        "volumeSol": tx["volumeSol"],
-                        "time": tx["time"]
+                        "amount": tx.get("amount", 0.0),
+                        "priceUsd": tx.get("priceUsd", 0.0),
+                        "volume": tx.get("volume", 0.0),
+                        "volumeSol": tx.get("volumeSol", 0.0),
+                        "time": tx.get("time", 0.0)
                     }
-                    if edge_type == "buy":
+                    if tx.get("type") == "buy":
                         edges_buy.append((tx["wallet_address"], tx["token_address"]))
                         attrs_buy.append(attrs)
-                    elif edge_type == "sell":
+                    elif tx.get("type") == "sell":
                         edges_sell.append((tx["wallet_address"], tx["token_address"]))
                         attrs_sell.append(attrs)
     return edges_buy, attrs_buy, edges_sell, attrs_sell
 
-def create_hetero_data(base_path, token_name):
+def load_dev_coin_edges(path):
+    edges = []
+    for filename in os.listdir(path):
+        if filename.endswith(".json"):
+            with open(os.path.join(path, filename), "r") as f:
+                tx = json.load(f)
+                dev = tx.get("dev_address")
+                coin = tx.get("token_address") or tx.get("coin_id")
+                if dev and coin:
+                    edges.append((dev, coin))
+    return edges
+
+def load_dev_nodes(path):
+    dev_ids = set()
+    for fname in os.listdir(path):
+        if fname.endswith(".json"):
+            with open(os.path.join(path, fname), "r") as f:
+                dev = json.load(f)
+                dev_ids.add(dev.get("dev_address"))
+    return dev_ids
+
+def create_hetero_data(base_path, token_name, save_path):
+    # Paths
     wallet_wallet_path = os.path.join(base_path, "wallet_wallet_edges", token_name)
     wallet_dev_path = os.path.join(base_path, "wallet_dev_edges", token_name)
     wallet_token_path = os.path.join(base_path, "wallet_token_edges", token_name)
+    dev_coin_path = os.path.join(base_path, "dev_coin_edges", token_name)
+    dev_node_path = os.path.join(base_path, "dev_nodes")
 
+    print(f"Creating HeteroData object for token: {token_name}")
     data = HeteroData()
 
+    # Load all edges
     print("Loading wallet-wallet edges...")
     wallet_wallet_edges, wallet_wallet_weights = load_wallet_wallet_edges(wallet_wallet_path)
 
@@ -69,9 +92,11 @@ def create_hetero_data(base_path, token_name):
     print("Loading wallet-token edges...")
     buy_edges, buy_attrs, sell_edges, sell_attrs = load_wallet_token_edges(wallet_token_path)
 
-    wallets = set()
-    devs = set()
-    tokens = set()
+    print("Loading dev-coin edges...")
+    dev_coin_edges = load_dev_coin_edges(dev_coin_path)
+
+    # Collect all unique nodes
+    wallets, devs, tokens = set(), set(), set()
 
     for src, dst in wallet_wallet_edges:
         wallets.add(src)
@@ -82,15 +107,24 @@ def create_hetero_data(base_path, token_name):
     for src, dst in buy_edges + sell_edges:
         wallets.add(src)
         tokens.add(dst)
+    for src, dst in dev_coin_edges:
+        devs.add(src)
+        tokens.add(dst)
 
+    # Include dev nodes from dev_nodes folder
+    devs.update(load_dev_nodes(dev_node_path))
+
+    # Map node IDs to indices
     wallet_map = {k: i for i, k in enumerate(wallets)}
     dev_map = {k: i for i, k in enumerate(devs)}
     token_map = {k: i for i, k in enumerate(tokens)}
 
+    # Assign number of nodes
     data["wallet"].num_nodes = len(wallet_map)
     data["dev"].num_nodes = len(dev_map)
     data["token"].num_nodes = len(token_map)
 
+    # Add edges to graph
     if wallet_wallet_edges:
         edge_index = torch.tensor([[wallet_map[src] for src, _ in wallet_wallet_edges],
                                    [wallet_map[dst] for _, dst in wallet_wallet_edges]], dtype=torch.long)
@@ -117,16 +151,29 @@ def create_hetero_data(base_path, token_name):
         for key in sell_attrs[0]:
             data["wallet", "sells", "token"][key] = torch.tensor([attr[key] for attr in sell_attrs], dtype=torch.float)
 
+    if dev_coin_edges:
+        edge_index = torch.tensor([[dev_map[src] for src, _ in dev_coin_edges],
+                                   [token_map[dst] for _, dst in dev_coin_edges]], dtype=torch.long)
+        data["dev", "creates", "token"].edge_index = edge_index
+
+    # Save to file
+    filename = os.path.join(save_path, f"{token_name}_heterograph.pt")
+    torch.save(data, filename)
+    print(f"Heterogeneous graph saved to: {filename}")
+
+    # Summary
+    print(f"\nNode types: {data.node_types}")
+    print(f"Edge types: {data.edge_types}")
+    print(f"Wallet nodes: {len(wallet_map)}, Dev nodes: {len(dev_map)}, Token nodes: {len(token_map)}")
+
     return data
 
+def main():
+    base_path = "/Users/drew/Desktop/data"  # Adjust if needed
+    save_path = "/Users/drew/Desktop/CS/CS 485/memecoin_fraud_detection"  # Folder to save the .pt file
+    token_name = "dragon"  # Your target coin
+
+    data = create_hetero_data(base_path, token_name, save_path)
+
 if __name__ == "__main__":
-    base_path = r"/Users/drew/Desktop/data"
-    token_name = "r_pwease"
-
-    print(f"Creating HeteroData object for token: {token_name}")
-    data = create_hetero_data(base_path, token_name)
-
-    print(data)
-    print(f"Node types: {data.node_types}")
-    print(f"Edge types: {data.edge_types}")
-    
+    main()
