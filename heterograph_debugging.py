@@ -156,6 +156,14 @@ def create_hetero_data(base_path, token_name, save_path):
                                    [token_map[dst] for _, dst in dev_coin_edges]], dtype=torch.long)
         data["dev", "creates", "token"].edge_index = edge_index
 
+    # Add placeholder features for all nodes that don't have them
+    for node_type, node_data in data.items():
+        if 'x' not in node_data:
+            num_nodes = node_data.edge_index.shape[1] if 'edge_index' in node_data else 0
+            # Placeholder feature: assign zeros or random values as features (size = num_nodes, feature_dim)
+            data[node_type].x = torch.zeros(num_nodes, 64)  # 64 is an arbitrary feature size
+            print(f"Warning: Node type '{node_type}' does not have 'x' feature. Assigning placeholder.")
+
     # Save to file
     filename = os.path.join(save_path, f"{token_name}_heterograph.pt")
     torch.save(data, filename)
@@ -170,19 +178,13 @@ def create_hetero_data(base_path, token_name, save_path):
 
 def load_data_from_json(graph_path, labels_path):
     print(f"Loading graph from {graph_path}")  # Debug print to confirm the path
-    graph = None
     try:
-        # Ensure it's a valid file path (not a directory)
-        if os.path.isdir(graph_path):
-            raise ValueError(f"{graph_path} is a directory, not a file.")
-        
         graph = torch.load(graph_path)  # Try to load the graph
         print("Graph loaded successfully.")
     except Exception as e:
         print(f"Error loading graph: {e}")  # Print any error that occurs
 
     print(f"Loading labels from {labels_path}")  # Debug print for labels path
-    labels = None
     try:
         with open(labels_path, 'r') as f:
             labels = json.load(f)  # Load labels from the JSON file
@@ -190,20 +192,18 @@ def load_data_from_json(graph_path, labels_path):
     except Exception as e:
         print(f"Error loading labels: {e}")  # Print any error that occurs
     
-    # Ensure both graph and labels are loaded properly before returning
-    return graph, labels
+    # Assuming you then need to convert the graph into a HeteroData object
+    return graph
 
 def main():
     base_path = "/Users/drew/Desktop/CS/CS 485/memecoin_fraud_detection/data"  # Adjust if needed
     save_path = "/Users/drew/Desktop/CS/CS 485/memecoin_fraud_detection/data/graphs"  # Folder to save the .pt file
     token_name = "r_pwease"  # Your target coin
     labels_path = '/Users/drew/Desktop/CS/CS 485/memecoin_fraud_detection/data/labels.json'  # Adjust this path as needed
-    graph_path = "/Users/drew/Desktop/CS/CS 485/memecoin_fraud_detection/data/graphs/r_pwease_heterograph.pt"  # Corrected path
 
     data = create_hetero_data(base_path, token_name, save_path)
-
-    # Load data after creating the heterograph
-    loaded_graph, loaded_labels = load_data_from_json(graph_path, labels_path)
+    graph_path = "/Users/drew/Desktop/CS/CS 485/memecoin_fraud_detection/data/graphs"  # Update this path as needed
+    loaded_graph = load_data_from_json(graph_path, labels_path)
 
 if __name__ == "__main__":
     main()
