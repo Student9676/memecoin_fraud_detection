@@ -804,11 +804,6 @@ if __name__ == "__main__":
                         raise
             log_data_collection("wallet_nodes")
 
-        coin_data = get_coin_data()
-        os.makedirs(DEV_NODES_PATH, exist_ok=True)
-        with open(os.path.join(DEV_NODES_PATH, f"{token_name}_coin.json"), "w") as f:
-            json.dump(coin_data, f, indent=4)
-
         # get dev<->coin edge data and save it as a JSON in DEV_COIN_EDGES_PATH
         if last_data_collected and "dev_coin_edges" in last_data_collected:
             print(f"Skipping dev_coin_edges collection since it was already collected.")
