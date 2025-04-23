@@ -280,7 +280,6 @@ def main():
 
     # Draw edge labels
     nx.draw_networkx_edge_labels(graph, pos, edge_labels=edge_labels, font_size=8)
-
     plt.show()
 
 if __name__ == "__main__":
