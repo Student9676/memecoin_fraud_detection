@@ -53,7 +53,7 @@ def load_wallet_token_edges(path):
 def load_dev_coin_edges(path):
     edges = []
     for filename in os.listdir(path):
-        if filename.endswith(".json") and filename.startswith("brain"):
+        if filename.endswith(".json") and filename.startswith("ogtroll"):
             with open(os.path.join(path, filename), "r") as f:
                 tx = json.load(f)
                 dev = tx.get("dev_address")
@@ -65,7 +65,7 @@ def load_dev_coin_edges(path):
 def load_dev_nodes(path):
     dev_ids = set()
     for fname in os.listdir(path):
-        if fname.endswith(".json") and fname.startswith("brain"):
+        if fname.endswith(".json") and fname.startswith("ogtroll"):
             with open(os.path.join(path, fname), "r") as f:
                 dev = json.load(f)
                 dev_ids.add(dev.get("dev_address")) # num_tokens_created or num_rugpull_tokens_created?
@@ -179,7 +179,7 @@ def create_hetero_data(base_path, token_name, save_path):
 def main():
     base_path = "data"  # Adjust if needed
     save_path = "graph"  # Folder to save the .pt file
-    token_name = "brain"  # Your target coin
+    token_name = "ogtroll"  # Your target coin
 
     data = create_hetero_data(base_path, token_name, save_path)
 
@@ -241,8 +241,12 @@ def main():
         # Add edge label
         edge_labels[(from_node, to_node)] = edge_type[1]
 
-    # Draw the graph
+    # make the graph somewhat symmetrical
     pos = nx.spring_layout(graph, k=2)
+    token_nodes = [node for node, attrs in graph.nodes(data=True) if attrs["type"] == "token"]
+    for token_node in token_nodes:
+        pos[token_node] = [0, 0]  # put token node at the center
+
     nx.draw_networkx(
         graph,
         pos=pos,
