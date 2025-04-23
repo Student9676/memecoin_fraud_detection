@@ -694,7 +694,9 @@ def save_wallet_dev_edges(base_path, verbose=False):
         # save all transactions between w1 and w2 (if any)
         if transactions:
             for transaction in transactions:
-                file_path = f"{base_path}/{token_name}/{transaction['from']}-{transaction['to']}.json" if transaction["from"] and transaction["to"] else f"{WALLET_WALLET_EDGES_PATH}/{token_name}/{transaction['signature']}.json"
+                if not transaction["from"] or not transaction["to"]:
+                    continue
+                file_path = f"{base_path}/{token_name}/{transaction['from']}-{transaction['to']}.json"
                 with open(file_path, "w") as f:
                     json.dump(transaction, f, indent=4)
                 tqdm.write(f"Saved transaction data for {transaction['signature'][:5]}...")            
