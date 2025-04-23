@@ -26,8 +26,17 @@ tokens = [
     ("KETAMINE", "7NsA8cMXi7U9CZ4wjif2J9g9YCKJkqy32PfBEtcVpump"), # 0
     ("MASSIVE", "ZGve8w1jgHwZLjd46kcbvFRep1TwpCngQsDx7Nmpump"), # 1 (rugpull)
     ("dragon", "2Vo6J4UVBYgky7rEfj6z2WVF94LLkAipkyRNuT37pump"), # 1 (slow rug)
-
-    ][3:] 
+    ("squeakaboo", "7Mf5cJdp3zpsA9GCBKdCK7So8BtzVK1w7qpVQcTvpump"), # 0
+    ("sundog", "BhQHCi6AkngEyYJooswZ9sGXxAFBWESpUx9Je8WoMCRK"), # 1 (washtrading)
+    ("popedog", "87eBqoJ6iwyFJcjYBGZivs7RA7nQ6JELoqp6jXfsj3mP"), # 1 (washtrading)
+    ("trumppope", "S3CcCg1z2y5HZ3fsEHbAiCpmRXk2ApxzkrBeup6TiF2"), # 1 (washtrading)
+    ("carlo", "7daesFB2skTZAEM9GmjeP9Nc3omsc7aWZdNWPrdupump"), # 0
+    ("hierophant", "EehspZuVw3jcJ5ppYxrJTk3t62umPEsffPndnkR5pump"), # 0 
+    ("btcd", "5dS7KMV8kmkLLSAvRsAqTTB3LvLNJyt4DhTXcnD7pump"), # 0
+    ("manners", "9oN5M2gPity4QzxShdLk4suZQF7rLoB1oFFGGvr3pump"), # 0
+    ("clickbait", "6Mntx18DBsk9em3a7KvaV4M5aiTDwrnNZgzR4RpQpump"), # 1
+    ("ogtroll", "71XUCawm1BPXJ9JkEET2BR2hxVkLzLLMhzLWD7b6pump"), # 1
+    ][6:] 
 
 # Token info (temp global variables)
 token_name = ""
@@ -685,7 +694,9 @@ def save_wallet_dev_edges(base_path, verbose=False):
         # save all transactions between w1 and w2 (if any)
         if transactions:
             for transaction in transactions:
-                file_path = f"{base_path}/{token_name}/{transaction['from']}-{transaction['to']}.json" if transaction["from"] and transaction["to"] else f"{WALLET_WALLET_EDGES_PATH}/{token_name}/{transaction['signature']}.json"
+                if not transaction["from"] or not transaction["to"]:
+                    continue
+                file_path = f"{base_path}/{token_name}/{transaction['from']}-{transaction['to']}.json"
                 with open(file_path, "w") as f:
                     json.dump(transaction, f, indent=4)
                 tqdm.write(f"Saved transaction data for {transaction['signature'][:5]}...")            
@@ -794,11 +805,6 @@ if __name__ == "__main__":
                         print("Max retries reached. Exiting.")
                         raise
             log_data_collection("wallet_nodes")
-
-        coin_data = get_coin_data()
-        os.makedirs(DEV_NODES_PATH, exist_ok=True)
-        with open(os.path.join(DEV_NODES_PATH, f"{token_name}_coin.json"), "w") as f:
-            json.dump(coin_data, f, indent=4)
 
         # get dev<->coin edge data and save it as a JSON in DEV_COIN_EDGES_PATH
         if last_data_collected and "dev_coin_edges" in last_data_collected:
