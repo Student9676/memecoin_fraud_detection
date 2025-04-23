@@ -26,8 +26,17 @@ tokens = [
     ("KETAMINE", "7NsA8cMXi7U9CZ4wjif2J9g9YCKJkqy32PfBEtcVpump"), # 0
     ("MASSIVE", "ZGve8w1jgHwZLjd46kcbvFRep1TwpCngQsDx7Nmpump"), # 1 (rugpull)
     ("dragon", "2Vo6J4UVBYgky7rEfj6z2WVF94LLkAipkyRNuT37pump"), # 1 (slow rug)
-
-    ][3:] 
+    ("squeakaboo", "7Mf5cJdp3zpsA9GCBKdCK7So8BtzVK1w7qpVQcTvpump"), # 0
+    ("sundog", "BhQHCi6AkngEyYJooswZ9sGXxAFBWESpUx9Je8WoMCRK"), # 1 (washtrading)
+    ("popedog", "87eBqoJ6iwyFJcjYBGZivs7RA7nQ6JELoqp6jXfsj3mP"), # 1 (washtrading)
+    ("trumppope", "S3CcCg1z2y5HZ3fsEHbAiCpmRXk2ApxzkrBeup6TiF2"), # 1 (washtrading)
+    ("carlo", "7daesFB2skTZAEM9GmjeP9Nc3omsc7aWZdNWPrdupump"), # 0
+    ("hierophant", "EehspZuVw3jcJ5ppYxrJTk3t62umPEsffPndnkR5pump"), # 0 
+    ("btcd", "5dS7KMV8kmkLLSAvRsAqTTB3LvLNJyt4DhTXcnD7pump"), # 0
+    ("manners", "9oN5M2gPity4QzxShdLk4suZQF7rLoB1oFFGGvr3pump"), # 0
+    ("clickbait", "6Mntx18DBsk9em3a7KvaV4M5aiTDwrnNZgzR4RpQpump"), # 1
+    ("ogtroll", "71XUCawm1BPXJ9JkEET2BR2hxVkLzLLMhzLWD7b6pump"), # 1
+    ][6:] 
 
 # Token info (temp global variables)
 token_name = ""
