@@ -36,6 +36,7 @@ tokens = [
     ("manners", "9oN5M2gPity4QzxShdLk4suZQF7rLoB1oFFGGvr3pump"), # 0
     ("clickbait", "6Mntx18DBsk9em3a7KvaV4M5aiTDwrnNZgzR4RpQpump"), # 1
     ("ogtroll", "71XUCawm1BPXJ9JkEET2BR2hxVkLzLLMhzLWD7b6pump"), # 1
+    ("quarter", "NmGYpXfwmc8Tt9yPtkDoo6tTyvjdZJfp3hAb7aWpump") # 1
     ][6:] 
 
 # Token info (temp global variables)
