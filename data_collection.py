@@ -797,7 +797,7 @@ if __name__ == "__main__":
         tokens = [line.strip().split(",") for line in f]
 
     # Collect data for each token
-    for name, address, _ in tokens:
+    for name, address, label in tokens:
         print(f"Collecting data for {name} ({address[:5]}...)...")
         # Get the last data collected from the log file
         data_collection_log_path = "logs/completed_data_collection.log"
@@ -894,7 +894,7 @@ if __name__ == "__main__":
         # Remove the current token,address from the log file
         with open(tokens_log_path, "r") as f:
             lines = f.readlines()
-        lines = [line for line in lines if line.strip() != f"{name},{address}"]
+        lines = [line for line in lines if address in line.strip()]
         with open(tokens_log_path, "w") as f:
             f.writelines(lines)
         
