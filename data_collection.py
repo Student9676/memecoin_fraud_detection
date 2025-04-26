@@ -20,23 +20,23 @@ BASE_SOLSCAN_URL = "https://solscan.io"
 
 # Tokens to collect data for
 tokens = [
-    ("r/pwease", "H8AyUYyjzVLxkkDHDShd671YrtziroNc8HjfXDnypump"), # 0
-    ("brain", "6SzkDM3RKZWEVuGeNfBxJNNRbQCQC9WQVtqXmdzepump"), # 1 (rugpull)
-    ("CK", "FuMeUE6XreUFzz8cTGAmgZp3E4qduehpzUJpcEsppump"), # 0
-    ("KETAMINE", "7NsA8cMXi7U9CZ4wjif2J9g9YCKJkqy32PfBEtcVpump"), # 0
-    ("MASSIVE", "ZGve8w1jgHwZLjd46kcbvFRep1TwpCngQsDx7Nmpump"), # 1 (rugpull)
-    ("dragon", "2Vo6J4UVBYgky7rEfj6z2WVF94LLkAipkyRNuT37pump"), # 1 (slow rug)
-    ("squeakaboo", "7Mf5cJdp3zpsA9GCBKdCK7So8BtzVK1w7qpVQcTvpump"), # 0
-    ("sundog", "BhQHCi6AkngEyYJooswZ9sGXxAFBWESpUx9Je8WoMCRK"), # 1 (washtrading)
-    ("popedog", "87eBqoJ6iwyFJcjYBGZivs7RA7nQ6JELoqp6jXfsj3mP"), # 1 (washtrading)
-    ("trumppope", "S3CcCg1z2y5HZ3fsEHbAiCpmRXk2ApxzkrBeup6TiF2"), # 1 (washtrading)
-    ("carlo", "7daesFB2skTZAEM9GmjeP9Nc3omsc7aWZdNWPrdupump"), # 0
-    ("hierophant", "EehspZuVw3jcJ5ppYxrJTk3t62umPEsffPndnkR5pump"), # 0 
-    ("btcd", "5dS7KMV8kmkLLSAvRsAqTTB3LvLNJyt4DhTXcnD7pump"), # 0
-    ("manners", "9oN5M2gPity4QzxShdLk4suZQF7rLoB1oFFGGvr3pump"), # 0
-    ("clickbait", "6Mntx18DBsk9em3a7KvaV4M5aiTDwrnNZgzR4RpQpump"), # 1
-    ("ogtroll", "71XUCawm1BPXJ9JkEET2BR2hxVkLzLLMhzLWD7b6pump"), # 1
-    ("quarter", "NmGYpXfwmc8Tt9yPtkDoo6tTyvjdZJfp3hAb7aWpump") # 1
+    ("QFE", "DECqp3qgUAarXoP2FssBnFXPsqtLhc5Y9UuvjxWMpump"), # 0
+    ("mumu", "5LafQUrVco6o7KMz42eqVEJ9LW31StPyGjeeu5sKoMtA"), # 0
+    ("buttcoin", "FasH397CeZLNYWkd3wWK9vrmjd1z93n3b59DssRXpump"), # 0
+    ("grift", "GekTNfm84QfyP2GdAHZ5AgACBRd69aNmgA5FDhZupump"), # 0
+    ("pdao", "Ds9FdU48nD34dgtfeSLtqvc5L9LoPig7cwb7kcxbmoon"), # 0
+    ("ghibli", "4TBi66vi32S7J8X1A6eWfaLHYmUXu7CStcEmsJQdpump"), # 0
+    ("IMG", "znv3FZt2HFAvzYf5LxzVyryh3mBXWuTRRng25gEZAjh"), # 0
+    ("distribute", "Ddm4DTxNZxABUYm2A87TFLY6GDG2ktM2eJhGZS3EbzHM"), # 0
+    ("ufloki", "0xE2007a2e6B249E3a0246E8277eAEAF0fB0A8fcdF"), # 1 (rugpull)
+    ("rocketpup", "FVC2YoGsnXdboRWFtnTceNXVvDH9ksLwtYHYxW3qpump"), # 1 (rugpull)
+    ("genzquant", "3an8rhdepsLCya22af7qDBKPbdomw8K4iCHXaA2Gpump"), # 1 (rugpull)
+    ("sharpei", "9jZgvgS2bWtQiYzv48GcWzY4tnkeRSANbTm8Kp1LmSyS"), # 1 (rugpull)
+    ("aura", "DtR4D9FtVoTX2569gaL837ZgrB6wNjj6tkmnX9Rdk9B2"), # 1 (wash trading)
+    ("wildnout", "5m9AhhwMnosop8CAWdSJDNfLLkg3EFkX5sJ3zAuMpump"), # 1 (rugpull)
+    ("daddy", "4Cnk9EPnW5ixfLZatCPJjDB1PUtcRpVVgTQukm9epump"), # 1 (wash trading)
+    ("mother", "3S8qX1MsMqRbiwKg2cQyx7nis1oHMgaCuc9c4VfvVdPN"), # 1 (wash trading)
+    
     ][6:] 
 
 # Token info (temp global variables)

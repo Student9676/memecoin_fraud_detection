@@ -31,7 +31,7 @@ def load_wallet_dev_edges(path):
     return edges, weights
 
 def load_wallet_token_edges(path, token_name):
-    with open(os.path.join("data/dev_nodes", f"{token_name}.json"), "r") as f:
+    with open(os.path.join("/Users/drew/Desktop/CS/CS 485/memecoin_fraud_detection/solana_data/dev_nodes", f"{token_name}.json"), "r") as f:
         dev_address = json.load(f)["dev_address"]
     edges_buy, edges_sell = [], []
     attrs_buy, attrs_sell = [], []
@@ -58,7 +58,7 @@ def load_wallet_token_edges(path, token_name):
     return edges_buy, attrs_buy, edges_sell, attrs_sell
 
 def load_dev_buy_sell_edges(path, token_name):
-    with open(os.path.join("data/dev_nodes", f"{token_name}.json"), "r") as f:
+    with open(os.path.join("/Users/drew/Desktop/CS/CS 485/memecoin_fraud_detection/solana_data/dev_nodes", f"{token_name}.json"), "r") as f:
         dev_address = json.load(f)["dev_address"]
     edges_buy, edges_sell = [], []
     attrs_buy, attrs_sell = [], []
@@ -212,7 +212,7 @@ def create_hetero_data(base_path, token_name, save_path):
         data["dev", "creates", "token"].edge_weight = torch.tensor(dev_coin_weights, dtype=torch.float)
 
     # dev node features
-    with open(os.path.join("data/dev_nodes", f"{token_name}.json"), "r") as f:
+    with open(os.path.join("/Users/drew/Desktop/CS/CS 485/memecoin_fraud_detection/solana_data/dev_nodes", f"{token_name}.json"), "r") as f:
         ft = json.load(f)["num_tokens_created"]
         data["dev"].x = torch.tensor([[ft]], dtype=torch.float)
     
@@ -272,8 +272,8 @@ def create_hetero_data(base_path, token_name, save_path):
 
 
 def main():
-    base_path = "data"  # Adjust if needed
-    save_path = "graph"  # Folder to save the .pt file
+    base_path = "/Users/drew/Desktop/CS/CS 485/memecoin_fraud_detection/solana_data"  # Adjust if needed
+    save_path = "/Users/drew/Desktop/CS/CS 485/memecoin_fraud_detection/heterographs"  # Folder to save the .pt file
     
     for token in os.listdir(os.path.join(base_path, "token_nodes")):
         token_name = token.split(".")[0]
