@@ -1,4 +1,5 @@
 .env
+!data/labels.json
 *.json
 __pycache__
 .vscode

@@ -751,15 +751,15 @@ if __name__ == "__main__":
     tokens_log_path = "logs/tokens_to_collect.log"
     if not os.path.exists(tokens_log_path) or os.stat(tokens_log_path).st_size == 0:
         with open(tokens_log_path, "w") as f:
-            for name, address in tokens:
-                f.write(f"{name},{address}\n")
+            for name, address, label in tokens:
+                f.write(f"{name},{address},{label}\n")
 
     # Read tokens from the log file
     with open(tokens_log_path, "r") as f:
         tokens = [line.strip().split(",") for line in f]
 
     # Collect data for each token
-    for name, address in tokens:
+    for name, address, label in tokens:
         print(f"Collecting data for {name} ({address[:5]}...)...")
         # Get the last data collected from the log file
         data_collection_log_path = "logs/completed_data_collection.log"
@@ -856,7 +856,7 @@ if __name__ == "__main__":
         # Remove the current token,address from the log file
         with open(tokens_log_path, "r") as f:
             lines = f.readlines()
-        lines = [line for line in lines if line.strip() != f"{name},{address}"]
+        lines = [line for line in lines if address not in line.strip()]
         with open(tokens_log_path, "w") as f:
             f.writelines(lines)
         
