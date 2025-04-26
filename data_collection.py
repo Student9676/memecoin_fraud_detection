@@ -894,7 +894,7 @@ if __name__ == "__main__":
         # Remove the current token,address from the log file
         with open(tokens_log_path, "r") as f:
             lines = f.readlines()
-        lines = [line for line in lines if address in line.strip()]
+        lines = [line for line in lines if address not in line.strip()]
         with open(tokens_log_path, "w") as f:
             f.writelines(lines)
         
