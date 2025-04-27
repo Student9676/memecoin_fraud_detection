@@ -49,22 +49,22 @@ tokens = [
     ("dognald","GSmTGgbK5hmgqWaSk9xTUc8LUmPohaNqYj1SmBLSpump", 1), # 1
     ("petroll","MxJQbqUAGVG1X1xAEgbgWaERcccQSDpwCfFBjqCpump", 1), # 1
     ("latinas", "7JG7HtTNTbrsTDqXPNDw2hbH7xoiRQFgL6BxN971pump", 1), # 1
-    # ("", "", 0), # 0
-    # ("", "", 0), # 0
-    # ("", "", 0), # 0
-    # ("", "", 0), # 0
-    # ("", "", 0), # 0
-    # ("", "", 0), # 0
-    # ("", "", 0), # 0
-    # ("", "", 0), # 0
-    # ("", "", 0), # 0
-    # ("", "", 0), # 0
-    # ("", "", 0), # 0
-    # ("", "", 0), # 0
-    # ("", "", 0), # 0
-    # ("", "", 0), # 0
-    # ("", "", 0), # 0
-    # ("", "", 0), # 0
+    ("staircase", "G8gSWTVcW8KVZ4xTqJsi29LwYykPxBYN2eewR6cYpump", 0), # 0
+    ("broccoli", "Aj9kZBbtoaMeo5rvTs1Q1hzzeGeH6ULtFT43HkeYpump", 0), # 0
+    ("froggage", "AfXebUzhit36wDCvcurNH5QfDsdZw7ZB4NpMrJV1pump", 1), # 1
+    ("hodl", "12qoc4eAgDGG16gTpRfXNiRCcxowBDoyB4NMtdvfpump", 1), # 1
+    ("memelord", "3yeba9GzXGXjT2GGaqCntNsBoSR6eqooXTq4kxiPpump", 0), # 0
+    ("greg", "2nSimBENnZfogiKEM9GMa9KGYMTEWPbBHekmDeWYpump", 0), # 0
+    ("unih", "68YMeqo1oX4AWiA7EaScZNe6SadLJZxEa6yDeG5qpump", 1), # 1
+    ("tax", "6gkU9ChRbsCBguCscT9FZLFNcdxzsEuDGg6MHAGRpump", 0), # 0
+    ("elon", "b2Xwm8RPxM7fYNW4ZZPargWunxzpqXJznK2tzPJpump", 1), # 1
+    ("ise", "Bwy2gdwJjrYpRW5wq2qKDLHNZJkKaRpgFDxKdEqVpump", 1), # 1
+    ("ccc", "YfuSMuVpriEy3GCFWCSnPvfYger4e6roxVcVRKppump", 1), # 1
+    ("gdoge", "59R7MrQEDTEBr7pzHamzivzARwgoVFFDwc5NsLjLbonk", 1), # 1
+    ("hope", "5ekFk18znKZASUaeiZpGhkxXKtMLso5c4rdUyYzQpump", 1), # 1
+    ("berb", "GiALppaf4HVg9KuEgXzrVac8WA7oRmTwh75Goiurpump", 0), # 0
+    ("&&&", "G29xk4FMBNouzTMgVSru3Y9u6MgemYuvfpJws4UXpump", 0), # 0
+    ("guapcoin", "USAXFkXx5xz7P2aQATVpYmCy93GAWCJAJD5hrcGqgFF", 0), # 0
 ]
 
 # save token names and their labels
@@ -72,7 +72,9 @@ token_labels = {re.sub(r"[^\w\-]", "_", token) + ".pt": label for token, _, labe
 with open(f"data/labels.json", "w") as f:
     json.dump(token_labels, f, indent=4)
 
-tokens = tokens[16:]
+tokens = tokens[29:]
+print(len(tokens))
+exit()
 
 # Token info (temp global variables)
 token_name = ""
