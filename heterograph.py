@@ -273,7 +273,7 @@ def create_hetero_data(base_path, token_name, save_path):
 
 def main():
     base_path = "data"  # Adjust if needed
-    save_path = "graph"  # Folder to save the .pt file
+    save_path = "heterographs"  # Folder to save the .pt file
     
     for token in os.listdir(os.path.join(base_path, "token_nodes")):
         token_name = token.split(".")[0]

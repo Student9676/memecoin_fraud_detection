@@ -40,8 +40,6 @@ tokens = [
     ("fakeout", "D2BhLfj7749EnVDkF6WcKqDJDGp9mm2xdUjoZYDepump", 1), # 1
     ("dogs","8SJjRDpNgJLuSrwKvJ8jEu8uRBWTeDmNtadhrAzDpump", 1), # 1
     ("rpecoin","HZ97T6LzHrjXvnA3RCPsJhizebQ2isLQet2G6NU4pump", 0), # 0
-    ("kevin","6Av5TuEQKtRVGrgQPNP6snTWQNHNjwqja574EQHGSWvB", 0), # 0
-    ("clown","6YxDFVwMF5NaP5eMmu78ut8J8J8Qd83QgwBpm451pump", 0), # 0
     ("wave","HziLoXS5Tu1XyDrBpnN6T2ve2cg5ndCpNyiSiAeYpump", 1), # 1
     ("aizen","8DmNNJb6naVPZLaB4o64gf2jfKB73WqNKRCECmzepump", 1), # 1?
     ("bhc","7T4X8diCfk9Kkcm2n9ZayaCEmWmsAAjw4Z21zF7vpump", 0), # 0
@@ -50,7 +48,6 @@ tokens = [
     ("trollingo","C8Yih2EauLzg3qQJFcAUVrZyrVuvjEGLot3YeE5cpump", 0), # 0
     ("dognald","GSmTGgbK5hmgqWaSk9xTUc8LUmPohaNqYj1SmBLSpump", 1), # 1
     ("petroll","MxJQbqUAGVG1X1xAEgbgWaERcccQSDpwCfFBjqCpump", 1), # 1
-    ("skill", "Ar3CWwj4sxb5riXhMsszmLquQpd2SztFk5fjcp9Bpump", 0), # 0
     ("latinas", "7JG7HtTNTbrsTDqXPNDw2hbH7xoiRQFgL6BxN971pump", 1), # 1
     # ("", "", 0), # 0
     # ("", "", 0), # 0
@@ -727,7 +724,7 @@ def save_wallet_dev_edges(base_path, verbose=False):
     # Generate all wallet pairs with dev wallet
     wallet_pairs = [(dev_address, w) for w in involved_wallets]
     print("num of wallet-dev pairs: ", len(wallet_pairs))
-    for w1, w2 in tqdm(wallet_pairs, desc="Getting wallet-wallet edges..."):
+    for w1, w2 in tqdm(wallet_pairs, desc="Getting wallet-dev edges..."):
         # get all transactions between w1 and w2
         transactions = get_transfer_transactions(w1, w2, base_path, verbose=verbose, rpc_url=f"https://rpc.shyft.to?api_key={SHYFT_API_KEY}")
         # save all transactions between w1 and w2 (if any)
