@@ -272,8 +272,13 @@ def create_hetero_data(base_path, token_name, save_path):
 
 
 def main():
+<<<<<<< HEAD
     base_path = "/Users/drew/Desktop/CS/CS 485/memecoin_fraud_detection/solana_data"  # Adjust if needed
     save_path = "/Users/drew/Desktop/CS/CS 485/memecoin_fraud_detection/heterographs"  # Folder to save the .pt file
+=======
+    base_path = "data"  # Adjust if needed
+    save_path = "heterographs"  # Folder to save the .pt file
+>>>>>>> 1e6b185e1983e8579022e6a4c19cb18f9aec74ca
     
     for token in os.listdir(os.path.join(base_path, "token_nodes")):
         token_name = token.split(".")[0]

@@ -20,24 +20,61 @@ BASE_SOLSCAN_URL = "https://solscan.io"
 
 # Tokens to collect data for
 tokens = [
-    ("QFE", "DECqp3qgUAarXoP2FssBnFXPsqtLhc5Y9UuvjxWMpump"), # 0
-    ("mumu", "5LafQUrVco6o7KMz42eqVEJ9LW31StPyGjeeu5sKoMtA"), # 0
-    ("buttcoin", "FasH397CeZLNYWkd3wWK9vrmjd1z93n3b59DssRXpump"), # 0
-    ("grift", "GekTNfm84QfyP2GdAHZ5AgACBRd69aNmgA5FDhZupump"), # 0
-    ("pdao", "Ds9FdU48nD34dgtfeSLtqvc5L9LoPig7cwb7kcxbmoon"), # 0
-    ("ghibli", "4TBi66vi32S7J8X1A6eWfaLHYmUXu7CStcEmsJQdpump"), # 0
-    ("IMG", "znv3FZt2HFAvzYf5LxzVyryh3mBXWuTRRng25gEZAjh"), # 0
-    ("distribute", "Ddm4DTxNZxABUYm2A87TFLY6GDG2ktM2eJhGZS3EbzHM"), # 0
-    ("ufloki", "0xE2007a2e6B249E3a0246E8277eAEAF0fB0A8fcdF"), # 1 (rugpull)
-    ("rocketpup", "FVC2YoGsnXdboRWFtnTceNXVvDH9ksLwtYHYxW3qpump"), # 1 (rugpull)
-    ("genzquant", "3an8rhdepsLCya22af7qDBKPbdomw8K4iCHXaA2Gpump"), # 1 (rugpull)
-    ("sharpei", "9jZgvgS2bWtQiYzv48GcWzY4tnkeRSANbTm8Kp1LmSyS"), # 1 (rugpull)
-    ("aura", "DtR4D9FtVoTX2569gaL837ZgrB6wNjj6tkmnX9Rdk9B2"), # 1 (wash trading)
-    ("wildnout", "5m9AhhwMnosop8CAWdSJDNfLLkg3EFkX5sJ3zAuMpump"), # 1 (rugpull)
-    ("daddy", "4Cnk9EPnW5ixfLZatCPJjDB1PUtcRpVVgTQukm9epump"), # 1 (wash trading)
-    ("mother", "3S8qX1MsMqRbiwKg2cQyx7nis1oHMgaCuc9c4VfvVdPN"), # 1 (wash trading)
-    
-    ][6:] 
+    ("r/pwease", "H8AyUYyjzVLxkkDHDShd671YrtziroNc8HjfXDnypump", 0), # 0
+    ("brain", "6SzkDM3RKZWEVuGeNfBxJNNRbQCQC9WQVtqXmdzepump", 1), # 1 (rugpull)
+    ("CK", "FuMeUE6XreUFzz8cTGAmgZp3E4qduehpzUJpcEsppump", 0), # 0
+    ("KETAMINE", "7NsA8cMXi7U9CZ4wjif2J9g9YCKJkqy32PfBEtcVpump", 0), # 0
+    ("MASSIVE", "ZGve8w1jgHwZLjd46kcbvFRep1TwpCngQsDx7Nmpump", 1), # 1 (rugpull)
+    ("dragon", "2Vo6J4UVBYgky7rEfj6z2WVF94LLkAipkyRNuT37pump", 1), # 1 (slow rug)
+    ("squeakaboo", "7Mf5cJdp3zpsA9GCBKdCK7So8BtzVK1w7qpVQcTvpump", 0), # 0
+    ("sundog", "BhQHCi6AkngEyYJooswZ9sGXxAFBWESpUx9Je8WoMCRK", 1), # 1 (washtrading)
+    ("popedog", "87eBqoJ6iwyFJcjYBGZivs7RA7nQ6JELoqp6jXfsj3mP", 1), # 1 (washtrading)
+    ("trumppope", "S3CcCg1z2y5HZ3fsEHbAiCpmRXk2ApxzkrBeup6TiF2", 1), # 1 (washtrading)
+    ("carlo", "7daesFB2skTZAEM9GmjeP9Nc3omsc7aWZdNWPrdupump", 0), # 0
+    ("hierophant", "EehspZuVw3jcJ5ppYxrJTk3t62umPEsffPndnkR5pump", 0), # 0 
+    ("btcd", "5dS7KMV8kmkLLSAvRsAqTTB3LvLNJyt4DhTXcnD7pump", 0), # 0
+    ("manners", "9oN5M2gPity4QzxShdLk4suZQF7rLoB1oFFGGvr3pump", 0), # 0
+    ("clickbait", "6Mntx18DBsk9em3a7KvaV4M5aiTDwrnNZgzR4RpQpump", 1), # 1
+    ("ogtroll", "71XUCawm1BPXJ9JkEET2BR2hxVkLzLLMhzLWD7b6pump", 1), # 1
+    ("quarter", "NmGYpXfwmc8Tt9yPtkDoo6tTyvjdZJfp3hAb7aWpump", 0), # 0
+    ("fakeout", "D2BhLfj7749EnVDkF6WcKqDJDGp9mm2xdUjoZYDepump", 1), # 1
+    ("dogs","8SJjRDpNgJLuSrwKvJ8jEu8uRBWTeDmNtadhrAzDpump", 1), # 1
+    ("rpecoin","HZ97T6LzHrjXvnA3RCPsJhizebQ2isLQet2G6NU4pump", 0), # 0
+    ("wave","HziLoXS5Tu1XyDrBpnN6T2ve2cg5ndCpNyiSiAeYpump", 1), # 1
+    ("aizen","8DmNNJb6naVPZLaB4o64gf2jfKB73WqNKRCECmzepump", 1), # 1?
+    ("bhc","7T4X8diCfk9Kkcm2n9ZayaCEmWmsAAjw4Z21zF7vpump", 0), # 0
+    ("shtcoin","FZ9za81u9gLpWKjUzZ8h2xoeZxgfL826MtUhU6sQpump", 0), # 0
+    ("bithuahua","6zxVEjmUVeLFPFRzD5h6fKHHvAEWNZ9caXN18GJNpump", 1), # 1
+    ("trollingo","C8Yih2EauLzg3qQJFcAUVrZyrVuvjEGLot3YeE5cpump", 0), # 0
+    ("dognald","GSmTGgbK5hmgqWaSk9xTUc8LUmPohaNqYj1SmBLSpump", 1), # 1
+    ("petroll","MxJQbqUAGVG1X1xAEgbgWaERcccQSDpwCfFBjqCpump", 1), # 1
+    ("latinas", "7JG7HtTNTbrsTDqXPNDw2hbH7xoiRQFgL6BxN971pump", 1), # 1
+    ("staircase", "G8gSWTVcW8KVZ4xTqJsi29LwYykPxBYN2eewR6cYpump", 0), # 0
+    ("broccoli", "Aj9kZBbtoaMeo5rvTs1Q1hzzeGeH6ULtFT43HkeYpump", 0), # 0
+    ("froggage", "AfXebUzhit36wDCvcurNH5QfDsdZw7ZB4NpMrJV1pump", 1), # 1
+    ("hodl", "12qoc4eAgDGG16gTpRfXNiRCcxowBDoyB4NMtdvfpump", 1), # 1
+    ("memelord", "3yeba9GzXGXjT2GGaqCntNsBoSR6eqooXTq4kxiPpump", 0), # 0
+    ("greg", "2nSimBENnZfogiKEM9GMa9KGYMTEWPbBHekmDeWYpump", 0), # 0
+    ("unih", "68YMeqo1oX4AWiA7EaScZNe6SadLJZxEa6yDeG5qpump", 1), # 1
+    ("tax", "6gkU9ChRbsCBguCscT9FZLFNcdxzsEuDGg6MHAGRpump", 0), # 0
+    ("elon", "b2Xwm8RPxM7fYNW4ZZPargWunxzpqXJznK2tzPJpump", 1), # 1
+    ("ise", "Bwy2gdwJjrYpRW5wq2qKDLHNZJkKaRpgFDxKdEqVpump", 1), # 1
+    ("ccc", "YfuSMuVpriEy3GCFWCSnPvfYger4e6roxVcVRKppump", 1), # 1
+    ("gdoge", "59R7MrQEDTEBr7pzHamzivzARwgoVFFDwc5NsLjLbonk", 1), # 1
+    ("hope", "5ekFk18znKZASUaeiZpGhkxXKtMLso5c4rdUyYzQpump", 1), # 1
+    ("berb", "GiALppaf4HVg9KuEgXzrVac8WA7oRmTwh75Goiurpump", 0), # 0
+    ("&&&", "G29xk4FMBNouzTMgVSru3Y9u6MgemYuvfpJws4UXpump", 0), # 0
+    ("guapcoin", "USAXFkXx5xz7P2aQATVpYmCy93GAWCJAJD5hrcGqgFF", 0), # 0
+]
+
+# save token names and their labels
+token_labels = {re.sub(r"[^\w\-]", "_", token) + ".pt": label for token, _, label in tokens}
+with open(f"data/labels.json", "w") as f:
+    json.dump(token_labels, f, indent=4)
+
+tokens = tokens[29:]
+print(len(tokens))
+exit()
 
 # Token info (temp global variables)
 token_name = ""
@@ -689,7 +726,7 @@ def save_wallet_dev_edges(base_path, verbose=False):
     # Generate all wallet pairs with dev wallet
     wallet_pairs = [(dev_address, w) for w in involved_wallets]
     print("num of wallet-dev pairs: ", len(wallet_pairs))
-    for w1, w2 in tqdm(wallet_pairs, desc="Getting wallet-wallet edges..."):
+    for w1, w2 in tqdm(wallet_pairs, desc="Getting wallet-dev edges..."):
         # get all transactions between w1 and w2
         transactions = get_transfer_transactions(w1, w2, base_path, verbose=verbose, rpc_url=f"https://rpc.shyft.to?api_key={SHYFT_API_KEY}")
         # save all transactions between w1 and w2 (if any)
