@@ -73,15 +73,13 @@ with open(f"data/labels.json", "w") as f:
     json.dump(token_labels, f, indent=4)
 
 tokens = tokens[29:]
-print(len(tokens))
-exit()
 
 # Token info (temp global variables)
 token_name = ""
 token_address = ""
 
 # Collection algo args
-get_cookies = True
+get_cookies = False
 headless = False
 
 # File paths
