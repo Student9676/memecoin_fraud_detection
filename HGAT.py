@@ -130,11 +130,11 @@ def main():
     print(f"Using device: {device}")  # Debugging output
 
     # Create the models directory if it doesn't exist
-    os.makedirs('data/HGAT_models', exist_ok=True)
+    os.makedirs('solana_data/HGAT_models', exist_ok=True)
 
     # Load your heterograph data
     graphs_with_labels = []
-    graph_dir = 'data/graphs/training_graphs'
+    graph_dir = 'heterographs'
     labels_file = 'labels.json'
     
     print(f"Loading graphs from directory: {graph_dir}")  # Debugging output
